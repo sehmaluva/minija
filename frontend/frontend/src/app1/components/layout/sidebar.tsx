@@ -2,9 +2,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "../../lib/utils"
-import { Button } from "../../components/ui/button"
-import { ScrollArea } from "../../components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "../../components/ui/sheet"
+import { Button } from "../ui/button"
+import { ScrollArea } from "../ui/scroll-area"
+import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet"
 import { Home, Building2, Bird, Heart, TrendingUp, BarChart3, Settings, Menu, LogOut } from "lucide-react"
 import { useAuth } from "../../contexts/auth-context"
 

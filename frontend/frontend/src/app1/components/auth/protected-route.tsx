@@ -5,7 +5,7 @@ import type React from "react"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../../contexts/auth-context"
-import { Card, CardContent } from "../../components/ui/card"
+import { Card, CardContent } from "../ui/card"
 import { Bird } from "lucide-react"
 
 interface ProtectedRouteProps {
