@@ -1,9 +1,7 @@
-"use client"
-
 import type React from "react"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
 import { Card, CardContent } from "../ui/card"
 import { Bird } from "lucide-react"
@@ -14,13 +12,13 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, loading } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push("/login")
+      navigate("/login")
     }
-  }, [isAuthenticated, loading, router])
+  }, [isAuthenticated, loading, navigate])
 
   if (loading) {
     return (

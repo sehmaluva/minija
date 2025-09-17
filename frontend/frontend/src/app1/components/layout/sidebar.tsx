@@ -1,6 +1,4 @@
-"use client"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { ScrollArea } from "../ui/scroll-area"
@@ -23,7 +21,7 @@ interface SidebarProps {
 }
 
 function SidebarContent({ className }: SidebarProps) {
-  const pathname = usePathname()
+  const location = useLocation()
   const { user, logout } = useAuth()
 
   return (
@@ -38,9 +36,9 @@ function SidebarContent({ className }: SidebarProps) {
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = location.pathname === item.href
             return (
-              <Link key={item.name} href={item.href}>
+              <Link key={item.name} to={item.href}>
                 <Button
                   variant={isActive ? "default" : "ghost"}
                   className={cn(

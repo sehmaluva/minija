@@ -1,8 +1,7 @@
-"use client"
-
 import type React from "react"
 
 import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
@@ -20,7 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
 
   const { login } = useAuth()
-  // const router = useRouter()
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +33,7 @@ export default function LoginPage() {
         title: "Welcome back!",
         description: "You have been successfully logged in.",
       })
-      router.push("/dashboard")
+      navigate("/dashboard")
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.")
     } finally {
@@ -108,7 +107,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
-            <Link href="/register" className="text-primary hover:underline">
+            <Link to="/register" className="text-primary hover:underline">
               Sign up
             </Link>
           </div>

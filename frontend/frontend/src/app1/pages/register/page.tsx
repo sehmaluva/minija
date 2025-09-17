@@ -1,10 +1,7 @@
-"use client"
-
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../../contexts/auth-context"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
@@ -32,7 +29,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
 
   const { register } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
   const { toast } = useToast()
 
   const handleChange = (field: string, value: string) => {
@@ -64,7 +61,7 @@ export default function RegisterPage() {
         title: "Account created!",
         description: "Welcome to PoultryPro. Your account has been created successfully.",
       })
-      router.push("/dashboard")
+      navigate("/dashboard")
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.")
     } finally {
@@ -227,7 +224,7 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="text-primary hover:underline">
+            <Link to="/login" className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

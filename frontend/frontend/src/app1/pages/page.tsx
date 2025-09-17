@@ -1,24 +1,22 @@
-"use client"
-
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/auth-context"
 import { Card, CardContent } from "../components/ui/card"
 import { Bird } from "lucide-react"
 
 export default function HomePage() {
   const { isAuthenticated, loading } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!loading) {
       if (isAuthenticated) {
-        router.push("/dashboard")
+        navigate("/dashboard")
       } else {
-        router.push("/login")
+        navigate("/login")
       }
     }
-  }, [isAuthenticated, loading, router])
+  }, [isAuthenticated, loading, navigate])
 
   if (loading) {
     return (
