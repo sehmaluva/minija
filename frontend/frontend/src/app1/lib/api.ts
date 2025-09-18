@@ -61,22 +61,24 @@ class ApiClient {
   }
 
   // Auth endpoints
+  // Backend returns { user, token, message }
   async login(email: string, password: string) {
-    return this.request<{ access: string; refresh: string; user: any }>("/auth/login/", {
+    return this.request<{ user: any; token: string; message?: string }>("/auth/login/", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
   }
 
   async register(userData: any) {
-    return this.request<{ access: string; refresh: string; user: any }>("/auth/register/", {
+    return this.request<{ user: any; token: string; message?: string }>("/auth/register/", {
       method: "POST",
       body: JSON.stringify(userData),
     })
   }
 
   async refreshToken(refresh: string) {
-    return this.request<{ access: string }>("/auth/refresh/", {
+    // If backend does not provide refresh endpoints, leave as placeholder
+    return this.request<any>("/auth/refresh/", {
       method: "POST",
       body: JSON.stringify({ refresh }),
     })

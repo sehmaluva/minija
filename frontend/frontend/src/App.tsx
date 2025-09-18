@@ -1,4 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import './App.css'
+import './app1/styles/globals.css'
 import HomePage from "./app1/pages/page";
 import LoginPage from "./app1/pages/login/page";
 import RegisterPage from "./app1/pages/register/page";
@@ -18,7 +20,7 @@ import SettingsPage from "./app1/pages/settings/page";
 function App() {
 
   return (
-    <div>
+    <div className="min-h-screen">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage/>}/>

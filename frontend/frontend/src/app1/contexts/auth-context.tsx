@@ -41,9 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiClient.login(email, password)
-      apiClient.setToken(response.access)
+      // backend returns { user, token }
+      apiClient.setToken(response.token)
       setUser(response.user)
-      localStorage.setItem("refresh_token", response.refresh)
+      localStorage.setItem("auth_token", response.token)
     } catch (error) {
       throw error
     }
@@ -52,9 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (userData: any) => {
     try {
       const response = await apiClient.register(userData)
-      apiClient.setToken(response.access)
+      apiClient.setToken(response.token)
       setUser(response.user)
-      localStorage.setItem("refresh_token", response.refresh)
+      localStorage.setItem("auth_token", response.token)
     } catch (error) {
       throw error
     }
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     apiClient.clearToken()
     setUser(null)
-    localStorage.removeItem("refresh_token")
+    localStorage.removeItem("auth_token")
   }
 
   const value = {
