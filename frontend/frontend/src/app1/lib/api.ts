@@ -44,7 +44,8 @@ class ApiClient {
     }
 
     if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`
+      // Django TokenAuthentication expects 'Token <key>'
+      headers.Authorization = `Token ${this.token}`
     }
 
     const response = await fetch(url, {

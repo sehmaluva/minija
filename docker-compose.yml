@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME:-poultry1}
+      POSTGRES_USER: ${DB_USER:-seh}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  django:
+    build:
+      context: .
+      dockerfile: docker/django/Dockerfile
+    entrypoint: ["/bin/bash","/code/docker/django/entrypoint.sh"]
+    env_file:
+      - .env
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+    expose:
+      - 8000
+    restart: unless-stopped
+
+  frontend-build:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    environment:
+      - VITE_API_URL=http://django:8000/api
+    # Build the frontend into the host folder so nginx can serve the static files
+    volumes:
+      - ./frontend/frontend:/app
+      - ./frontend/frontend/dist:/app/dist
+  command: ["/bin/sh","-c","pnpm install && pnpm run build"]
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/frontend/dist:/usr/share/nginx/html:ro
+
+volumes:
+  postgres_data:
