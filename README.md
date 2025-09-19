@@ -32,232 +32,124 @@ A comprehensive Django REST API backend for managing poultry farms, flocks, heal
 #### Flock Management
 - `GET /api/flocks/` - List flocks
 - `POST /api/flocks/` - Create flock
-- `GET /api/flocks/{id}/` - Get flock details
-- `GET /api/flocks/statistics/` - Flock statistics
-- `GET /api/flocks/breeds/` - List breeds
-- `GET /api/flocks/movements/` - Flock movements
+# MiniJa — Broiler Manager
 
-#### Health Tracking
-- `GET /api/health/records/` - Health records
-- `POST /api/health/records/` - Create health record
-- `GET /api/health/mortality/` - Mortality records
-- `GET /api/health/dashboard/` - Health dashboard
+A small-scale broiler management system (Django backend + React + Vite frontend).
+This README focuses on local development setup and recent frontend changes.
 
-#### Production Monitoring
-- `GET /api/production/feed/` - Feed consumption records
-- `GET /api/production/eggs/` - Egg production records
-- `GET /api/production/weights/` - Weight tracking records
-- `GET /api/production/environmental/` - Environmental conditions
-- `GET /api/production/dashboard/` - Production dashboard
+## What this repo contains
+- Django backend (API): serve at `http://localhost:8000/` in development.
+- React frontend (Vite + TypeScript + Tailwind): located under `frontend/frontend` and served at `http://localhost:5173/` in development.
 
-#### Reports & Analytics
-- `GET /api/reports/` - List reports
-- `POST /api/reports/generate/` - Generate custom report
-- `GET /api/reports/analytics/dashboard/` - Analytics dashboard
-- `GET /api/reports/alerts/` - System alerts
+## Quick start (recommended)
+Prereqs: Python 3.10+, Node.js 18+, pnpm, PostgreSQL (or SQLite for quick dev), Redis (optional)
 
-## Installation
+1. Backend: create & activate virtualenv
 
-### Prerequisites
-- Python 3.8+
-- PostgreSQL 12+
-- Redis (for Celery tasks)
-
-### Setup
-
-1. **Clone the repository**
-\`\`\`bash
-git clone <repository-url>
-cd poultry-management-backend
-\`\`\`
-
-2. **Create virtual environment**
-\`\`\`bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-\`\`\`
-
-3. **Install dependencies**
-\`\`\`bash
+```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-\`\`\`
+```
 
-4. **Environment Configuration**
-\`\`\`bash
+2. Backend: configure env
+
+```bash
 cp .env.example .env
-# Edit .env with your database and other settings
-\`\`\`
+# edit .env with your database credentials and SECRET_KEY
+```
 
-5. **Database Setup**
-\`\`\`bash
-# Create PostgreSQL database
-createdb poultry_db
+3. Backend: run migrations and create superuser
 
-# Run migrations
+```bash
 python manage.py makemigrations
 python manage.py migrate
-\`\`\`
-
-6. **Create Superuser**
-\`\`\`bash
 python manage.py createsuperuser
-\`\`\`
+```
 
-7. **Seed Initial Data** (Optional)
-\`\`\`bash
-python scripts/seed_initial_data.py
-\`\`\`
+4. Frontend: install and run
 
-8. **Run Development Server**
-\`\`\`bash
+```bash
+cd frontend/frontend
+pnpm install
+pnpm dev
+# open http://localhost:5173
+```
+
+5. Backend: run server
+
+```bash
 python manage.py runserver
-\`\`\`
+# open http://localhost:8000
+```
 
-The API will be available at `http://localhost:8000/`
+## Frontend notes (recent changes)
+- The app uses Vite + React (TypeScript) + TailwindCSS v4 and lucide-react icons.
+- App1 (the main SPA) has been restyled to a green "broiler" theme and now exposes pages for:
+  - Dashboard
+  - Orders
+  - Accounting
+  - Forecast
+  - Reports
+  - Settings
+- To reduce build-time Tailwind errors we replaced some `@apply` usages with explicit CSS in `src/app1/styles/globals.css`. The app still uses Tailwind utilities, but if you prefer to restore `@apply` usage, inspect `postcss.config.cjs` and `tailwind.config.js` for content globs.
 
-### API Documentation
-- Swagger UI: `http://localhost:8000/api/docs/`
-- OpenAPI Schema: `http://localhost:8000/api/schema/`
+## Backend API highlights
+- Authentication endpoints (DRF Token auth):
+  - `POST /api/auth/login/` — login, returns `{ user, token }`
+  - `POST /api/auth/register/` — user creation
+  - `POST /api/auth/logout/`
+- Forecast API (simple historical predictor): `/api/forecast/predict/feed/` (see `apps/forecast`)
 
-## Configuration
+## Common developer tasks
+- Typecheck frontend (from `frontend/frontend`):
 
-### Environment Variables
-\`\`\`env
-# Database
-DB_NAME=your_database_name
-DB_USER=your_database_use
-DB_PASSWORD=your_database_password
-DB_HOST=your_database_host_address
-DB_PORT=your_database_host.port
+```bash
+pnpm exec tsc --noEmit
+```
 
-# Django
-SECRET_KEY=your-secret-key
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+- Run Django checks:
 
-# Redis (for Celery)
-REDIS_URL=redis://localhost:6379/0
-\`\`\`
+```bash
+python manage.py check
+```
 
-### User Roles & Permissions
+- Create forecast migrations (if you modify models):
 
-- **Admin**: Full system access
-- **Owner**: Manage owned farms and all related data
-- **Manager**: Manage assigned farms and flocks
-- **Veterinarian**: Access health records and create treatments
-- **Worker**: Basic production data entry
+```bash
+python manage.py makemigrations apps.forecast
+python manage.py migrate
+```
 
-## API Usage Examples
+## Troubleshooting
+- Blank frontend or white page:
+  - Open developer console in the browser and check for runtime errors (often missing imports or a runtime exception will stop React from rendering).
+  - Verify the Vite dev server is running in `frontend/frontend` and that `pnpm dev` prints a local URL.
+- Tailwind `@apply` errors:
+  - If you see `Cannot apply unknown utility class '...'` when Vite starts, ensure `tailwind.config.js` includes the correct `content` globs (the project includes `src/**/*.{js,ts,jsx,tsx,html,css}`), and `postcss.config.cjs` uses `@tailwindcss/postcss` wrapper.
+  - As a quick workaround we converted a few `@apply` uses to plain CSS in `src/app1/styles/globals.css`.
+- Login returns HTTP 400 from the client:
+  - Check backend logs for the `/api/auth/login/` request and examine the response body — frontend now collapses server validation errors into readable text.
 
-### Authentication
-\`\`\`bash
-# Register new user
-curl -X POST http://localhost:8000/api/auth/register/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "username": "user123",
-    "password": "securepass123",
-    "password_confirm": "securepass123",
-    "first_name": "John",
-    "last_name": "Doe",
-    "role": "manager"
-  }'
+## Deployment hints
+- Production build (frontend):
 
-# Login
-curl -X POST http://localhost:8000/api/auth/login/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "securepass123"
-  }'
-\`\`\`
+```bash
+cd frontend/frontend
+pnpm build
+# serve `dist` with nginx or embed in Docker image
+```
 
-### Create Farm
-\`\`\`bash
-curl -X POST http://localhost:8000/api/farms/ \
-  -H "Authorization: Token your-auth-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Green Valley Farm",
-    "address": "123 Farm Road",
-    "city": "Farmville",
-    "state": "Iowa",
-    "country": "USA",
-    "license_number": "PF-2024-002",
-    "established_date": "2024-01-01",
-    "total_area": 25.5
-  }'
-\`\`\`
-
-### Record Egg Production
-\`\`\`bash
-curl -X POST http://localhost:8000/api/production/eggs/ \
-  -H "Authorization: Token your-auth-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "flock": 1,
-    "date": "2024-01-15",
-    "total_eggs": 4200,
-    "grade_a_eggs": 3800,
-    "grade_b_eggs": 300,
-    "grade_c_eggs": 80,
-    "cracked_eggs": 15,
-    "dirty_eggs": 5,
-    "average_weight": 63.2
-  }'
-\`\`\`
-
-## Development
-
-### Running Tests
-\`\`\`bash
-python manage.py test
-\`\`\`
-
-### Code Quality
-\`\`\`bash
-# Format code
-black .
-
-# Lint code  
-flake8 .
-\`\`\`
-
-### Background Tasks
-Start Celery worker for background tasks:
-\`\`\`bash
-celery -A core worker -l info
-\`\`\`
-
-## Production Deployment
-
-### Using Docker
-\`\`\`bash
-# Build image
-docker build -t poultry-backend .
-
-# Run container
-docker run -p 8000:8000 --env-file .env poultry-backend
-\`\`\`
-
-### Using Gunicorn
-\`\`\`bash
-gunicorn core.wsgi:application --bind 0.0.0.0:8000
-\`\`\`
+- Docker: see `docker/` and `docker-compose.yml` in repo for example compose that reverse-proxies the SPA and proxies `/api` to Django.
 
 ## Contributing
+Open an issue or create a PR. Keep changes small and add/update tests when appropriate.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+---
+If you'd like, I can:
+- Improve layout spacing on the login page (add consistent gap between inputs and buttons). I already adjusted some input spacing in `src/app1/pages/login/page.tsx` earlier; I can fine-tune it further.
+- Create the forecast migrations and seed sample data so the forecast endpoint returns visible predictions.
+- Wire orders/accounting pages to backend CRUD endpoints.
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions, please open an issue in the repository or contact the development team.
+Which of those should I do next?
+curl -X POST http://localhost:8000/api/auth/register/ \
