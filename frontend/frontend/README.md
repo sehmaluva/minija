@@ -1,3 +1,25 @@
+Frontend (Vite + React)
+
+Quick notes:
+
+- Install dependencies (pnpm recommended):
+
+  pnpm install
+
+- Add icons package if not present:
+
+  pnpm add @heroicons/react
+
+- Start dev server:
+
+  pnpm run dev
+
+- The new pages added for this broiler-focused edition:
+  - /orders — manage chick orders & reminders
+  - /accounting — sales and costs overview
+  - /forecast — simple feed prediction endpoint
+
+These pages call the backend endpoints under `/api/...` so ensure the Django server is running and CORS allows the frontend origin.
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

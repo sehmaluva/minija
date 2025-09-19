@@ -35,18 +35,20 @@ export default function LoginPage() {
       })
       navigate("/dashboard")
     } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.")
+      // Prefer backend provided message when available
+      const msg = err.message || (err?.response?.message) || "Login failed. Please try again."
+      setError(msg)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Bird className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold">PoultryPro</span>
             </div>
@@ -55,14 +57,14 @@ export default function LoginPage() {
           <CardDescription>Sign in to your poultry management account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -72,10 +74,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-white"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
@@ -86,6 +89,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  className="bg-white pr-10"
                 />
                 <Button
                   type="button"
@@ -100,7 +104,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full py-3" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>

@@ -202,7 +202,6 @@ export default function ReportsPage() {
                         <SelectItem value="summary">Summary Report</SelectItem>
                         <SelectItem value="financial">Financial Report</SelectItem>
                         <SelectItem value="production">Production Report</SelectItem>
-                        <SelectItem value="health">Health Report</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

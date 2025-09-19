@@ -55,7 +55,24 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      // Try to build a useful message from possible error shapes
+      let msg = errorData.message || ''
+      if (!msg) {
+        if (typeof errorData === 'string') msg = errorData
+        else if (Array.isArray(errorData)) msg = errorData.join(' ')
+        else if (typeof errorData === 'object' && errorData !== null) {
+          // collect values (arrays or strings)
+          const parts: string[] = []
+          Object.values(errorData).forEach((v) => {
+            if (Array.isArray(v)) parts.push(v.join(' '))
+            else if (typeof v === 'string') parts.push(v)
+            else if (typeof v === 'object') parts.push(JSON.stringify(v))
+          })
+          msg = parts.join(' ')
+        }
+      }
+
+      throw new Error(msg || `HTTP error! status: ${response.status}`)
     }
 
     return response.json()
@@ -86,23 +103,7 @@ class ApiClient {
   }
 
   // Farm endpoints
-  async getFarms() {
-    return this.request<PaginatedResponse<any>>("/farms/")
-  }
-
-  async createFarm(farmData: any) {
-    return this.request<any>("/farms/", {
-      method: "POST",
-      body: JSON.stringify(farmData),
-    })
-  }
-
-  async updateFarm(id: number, farmData: any) {
-    return this.request<any>(`/farms/${id}/`, {
-      method: "PUT",
-      body: JSON.stringify(farmData),
-    })
-  }
+  // (Farms endpoints removed for broiler-focused product)
 
   // Flock endpoints
   async getFlocks(farmId?: number) {
@@ -118,17 +119,7 @@ class ApiClient {
   }
 
   // Health endpoints
-  async getHealthRecords(flockId?: number) {
-    const endpoint = flockId ? `/health/records/?flock=${flockId}` : "/health/records/"
-    return this.request<PaginatedResponse<any>>(endpoint)
-  }
-
-  async createHealthRecord(recordData: any) {
-    return this.request<any>("/health/records/", {
-      method: "POST",
-      body: JSON.stringify(recordData),
-    })
-  }
+  // (Health endpoints removed — not part of broiler minimal product)
 
   // Production endpoints
   async getProductionRecords(flockId?: number) {
@@ -151,6 +142,29 @@ class ApiClient {
   async getProductionReport(params: any) {
     const queryString = new URLSearchParams(params).toString()
     return this.request<any>(`/reports/production/?${queryString}`)
+  }
+
+  // Accounting endpoints (basic)
+  async getSales() {
+    return this.request<PaginatedResponse<any>>("/accounting/sales/")
+  }
+
+  async getCosts() {
+    return this.request<PaginatedResponse<any>>("/accounting/costs/")
+  }
+
+  // Orders endpoints (basic)
+  async getOrders() {
+    return this.request<PaginatedResponse<any>>("/orders/")
+  }
+
+  async createOrder(data: any) {
+    return this.request<any>("/orders/", { method: "POST", body: JSON.stringify(data) })
+  }
+
+  // Forecast endpoints (basic)
+  async getForecasts() {
+    return this.request<any>("/forecast/predict/feed/")
   }
 }
 

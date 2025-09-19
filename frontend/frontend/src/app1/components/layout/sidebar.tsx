@@ -3,15 +3,16 @@ import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { ScrollArea } from "../ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet"
-import { Home, Building2, Bird, Heart, TrendingUp, BarChart3, Settings, Menu, LogOut } from "lucide-react"
+import { Home, Building2, Bird, Heart, TrendingUp, BarChart3, Settings, Menu, LogOut, Truck, DollarSign } from "lucide-react"
 import { useAuth } from "../../contexts/auth-context"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Farms", href: "/farms", icon: Building2 },
   { name: "Flocks", href: "/flocks", icon: Bird },
-  { name: "Health", href: "/health", icon: Heart },
   { name: "Production", href: "/production", icon: TrendingUp },
+  { name: "Orders", href: "/orders", icon: Truck },
+  { name: "Accounting", href: "/accounting", icon: DollarSign },
+  { name: "Forecast", href: "/forecast", icon: BarChart3 },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ]

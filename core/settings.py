@@ -34,13 +34,16 @@ INSTALLED_APPS= [
     'django_filters',
     'drf_spectacular',
 
-    #custom apps
+    # custom apps (keep farms/health registered to avoid import errors; UI will hide them)
     'apps.farms',
-    'apps.flocks',
     'apps.health',
+    'apps.flocks',
     'apps.production',
     'apps.reports',
     'apps.users',
+    'apps.accounting',
+    'apps.orders',
+    'apps.forecast',
 
 ]
 
