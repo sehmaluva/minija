@@ -1,14 +1,19 @@
 # Poultry Management System 
+
 ## Features
 
 ### Core Functionality
+
 - **User Management**: Role-based authentication (Admin, Manager, Worker, Owner)
-- **Farm Management**: Multi-farm support with buildings and capacity tracking
-- **Flock Management**: Complete flock lifecycle management with breed tracking
-- **Health Tracking**: Vaccination schedules, medication records, mortality tracking
-- **Production Monitoring**: Feed consumption, egg production, weight tracking, environmental conditions
-- **Reporting & Analytics**: Comprehensive dashboards and custom report generation
-- **Alert System**: Automated alerts for health issues, production anomalies
+-- **Accounting Management**: Keep track of sales and costs.
+- **Farm Management**: Multi-farm support with buildings and capacity tracking.
+- **Flock Management**: Complete flock lifecycle management with breed tracking.
+- **Health Tracking**: Vaccination schedules, medication records, mortality tracking.
+- **Production Monitoring**: Feed consumption, egg production, weight tracking, environmental conditions.
+- **Reporting & Analytics**: Comprehensive dashboards and custom report generation.
+- **Alert System**: Automated alerts for health issues, production anomalies.
+
+#### How to start the app
 
 1. Backend: create & activate virtualenv
 
@@ -18,14 +23,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Backend: configure env
+1. Backend: configure env
 
 ```bash
-cp .env.example .env
-# edit .env with your database credentials and SECRET_KEY
+touch .env
+# edit .env with your database credentials and SECRET_KEY 
 ```
 
-3. Backend: run migrations and create superuser
+1. Backend: run migrations and create superuser
 
 ```bash
 python manage.py makemigrations
@@ -33,7 +38,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-4. Frontend: install and run
+1. Frontend: install and run
 
 ```bash
 cd frontend/
@@ -42,7 +47,7 @@ pnpm dev
 # open http://localhost:5173
 ```
 
-5. Backend: run server
+1. Backend: run server
 
 ```bash
 python manage.py runserver
@@ -50,6 +55,7 @@ python manage.py runserver
 ```
 
 ## Common developer tasks
+
 - Typecheck frontend (from `frontend/`):
 
 ```bash
@@ -63,6 +69,7 @@ python manage.py check
 ```
 
 ## Deployment hints
+
 - Production build (frontend):
 
 ```bash
@@ -74,6 +81,5 @@ pnpm build
 - Docker: see `docker/` and `docker-compose.yml` in repo for example compose that reverse-proxies the SPA and proxies `/api` to Django.
 
 ## Contributing
-Open an issue or create a PR. Keep changes small and add/update tests when appropriate.
 
-
+Feel free to open an issue or create a PR. Keep changes small and add/update tests when appropriate.
