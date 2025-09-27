@@ -17,6 +17,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
+CSRF_TRUSTED_ORIGINS =[
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
+]
 
 INSTALLED_APPS= [
     #django
@@ -154,7 +158,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Spectacular settings for API documentation
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Poultry Management API',
-    'DESCRIPTION': 'A comprehensive API for managing poultry farms, flocks, health, and production',
+    'DESCRIPTION': 'A comprehensive API for managing broilers',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }

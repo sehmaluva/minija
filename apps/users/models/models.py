@@ -6,18 +6,13 @@ class User(AbstractUser):
     Custom user model for the poultry management system
     """
     ROLE_CHOICES = [
-        ('admin', 'Administrator'),
-        ('manager', 'Farm Manager'),
-        ('worker', 'Farm Worker'),
-        ('veterinarian', 'Veterinarian'),
-        ('owner', 'Farm Owner'),
+        ('admin', 'System Administrator'),
+        ('user', 'System User'),
     ]
-    
-    # groups = models.ManyToManyField(Group, related_name='custom_user_set',blank=True)
-    # user_permissions = models.ManyToManyField(Permission, related_name="custom_user_permissions", blank=True)
+
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='worker')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

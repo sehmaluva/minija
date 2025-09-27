@@ -122,7 +122,7 @@ class UserListView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin', 'manager']:
+        if user.role == 'admin':
             return User.objects.all()
         return User.objects.filter(id=user.id)
 
@@ -142,32 +142,8 @@ def user_permissions_view(request):
             'can_manage_health': True,
             'can_manage_production': True,
         },
-        'manager': {
+        'user': {
             'can_manage_users': False,
-            'can_manage_farms': True,
-            'can_manage_flocks': True,
-            'can_view_reports': True,
-            'can_manage_health': True,
-            'can_manage_production': True,
-        },
-        'veterinarian': {
-            'can_manage_users': False,
-            'can_manage_farms': False,
-            'can_manage_flocks': False,
-            'can_view_reports': True,
-            'can_manage_health': True,
-            'can_manage_production': False,
-        },
-        'worker': {
-            'can_manage_users': False,
-            'can_manage_farms': False,
-            'can_manage_flocks': False,
-            'can_view_reports': False,
-            'can_manage_health': False,
-            'can_manage_production': True,
-        },
-        'owner': {
-            'can_manage_users': True,
             'can_manage_farms': True,
             'can_manage_flocks': True,
             'can_view_reports': True,
