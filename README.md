@@ -44,7 +44,7 @@ python manage.py createsuperuser
 cd frontend/
 pnpm install
 pnpm dev
-# open http://localhost:5173
+# open http://localhost:3000
 ```
 
 1. Backend: run server
