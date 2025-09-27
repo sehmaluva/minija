@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from apps.forecast.models import HistoricalEntry
+from apps.forecast.models.models import HistoricalEntry
 from datetime import timedelta
 
 
