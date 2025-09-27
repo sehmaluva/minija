@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from apps.accounting.models import Sale, Cost, Transaction
+from apps.accounting.models.models import Sale, Cost, Transaction
 from .serializers import SaleSerializer, CostSerializer, TransactionSerializer
 
 

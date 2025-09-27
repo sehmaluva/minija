@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sale, Cost, Transaction
+from .models.models import Sale, Cost, Transaction
 
 
 @admin.register(Sale)
