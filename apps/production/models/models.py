@@ -5,6 +5,41 @@ from decimal import Decimal
 
 User = get_user_model()
 
+class Batch(models.Model):
+    """
+    Model representing different batches of broilers
+    """
+    batch_number = models.CharField(max_length=100, unique=True)
+    supplier = models.CharField(max_length=100)
+    collection_date = models.DateTimeField(auto_now_add=True)
+    initial_count = models.PositiveIntegerField()
+    current_count = models.PositiveIntegerField()
+    notes = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_batch')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'batches'
+        verbose_name = 'batch'
+        verbose_name_plural = 'batches'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.batch_number
+    
+    @property
+    def age_in_days(self):
+        from django.utils import timezone
+        import datetime
+        return (datetime.today() - self.collection_date).days if self.collection_date else None
+    
+    @property
+    def mortality_rate(self):
+        if self.initial_count == 0:
+            return 0
+        return ((self.initial_count - self.current_count) / self.initial_count) * 100 if self.initial_count and self.current_count else None
+
 class FeedRecord(models.Model):
     """
     Model for tracking feed consumption
@@ -13,11 +48,10 @@ class FeedRecord(models.Model):
         ('starter', 'Starter Feed'),
         ('grower', 'Grower Feed'),
         ('finisher', 'Finisher Feed'),
-        ('layer', 'Layer Feed'),
-        ('breeder', 'Breeder Feed'),
+        ('mash', 'Mixed Mash Maize Crumbs'),
     ]
     
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='feed_records')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='feed_records')
     date = models.DateField()
     feed_type = models.CharField(max_length=20, choices=FEED_TYPES)
     brand = models.CharField(max_length=200)
@@ -35,7 +69,7 @@ class FeedRecord(models.Model):
         ordering = ['-date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.feed_type} - {self.quantity_kg}kg"
+        return f"{self.batch.batch_number} - {self.feed_type} - {self.quantity_kg}kg"
     
     @property
     def total_cost(self):
@@ -87,7 +121,7 @@ class WeightRecord(models.Model):
     """
     Model for tracking bird weight measurements
     """
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='weight_records')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='weight_records')
     date = models.DateField()
     sample_size = models.PositiveIntegerField(help_text="Number of birds weighed")
     average_weight = models.DecimalField(max_digits=6, decimal_places=2, help_text="Average weight in grams")
@@ -105,13 +139,13 @@ class WeightRecord(models.Model):
         ordering = ['-date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.date} - {self.average_weight}g avg"
+        return f"{self.batch.batch_number} - {self.date} - {self.average_weight}g avg"
 
 class EnvironmentalRecord(models.Model):
     """
     Model for tracking environmental conditions
     """
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='environmental_records')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='environmental_records')
     date = models.DateTimeField()
     temperature = models.DecimalField(max_digits=5, decimal_places=2, help_text="Temperature in Celsius")
     humidity = models.DecimalField(max_digits=5, decimal_places=2, help_text="Humidity percentage")
@@ -129,4 +163,4 @@ class EnvironmentalRecord(models.Model):
         ordering = ['-date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.date.strftime('%Y-%m-%d %H:%M')} - {self.temperature}°C"
+        return f"{self.batch.batch_number} - {self.date.strftime('%Y-%m-%d %H:%M')} - {self.temperature}°C"
