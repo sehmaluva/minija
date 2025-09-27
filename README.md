@@ -68,18 +68,6 @@ pnpm exec tsc --noEmit
 python manage.py check
 ```
 
-## Deployment hints
-
-- Production build (frontend):
-
-```bash
-cd frontend/frontend
-pnpm build
-# serve `dist` with nginx or embed in Docker image
-```
-
-- Docker: see `docker/` and `docker-compose.yml` in repo for example compose that reverse-proxies the SPA and proxies `/api` to Django.
-
 ## Contributing
 
 Feel free to open an issue or create a PR. Keep changes small and add/update tests when appropriate.
