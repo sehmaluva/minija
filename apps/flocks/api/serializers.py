@@ -11,7 +11,8 @@ class BatchSerializer(serializers.ModelSerializer):
     survival_rate = serializers.SerializerMethodField()
     class Meta:
         model = Batch
-        
+        exclude = ['id']
+
     def get_age_in_weeks(self, obj):
         return round(obj.age_in_days / 7, 1)
     

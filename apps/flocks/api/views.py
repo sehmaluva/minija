@@ -64,7 +64,6 @@ def batch_statistics_view(request):
         'active_batches': active_batches.count(),
         'total_birds': active_batches.aggregate(total=Sum('current_count'))['total'] or 0,
         'average_batch_size': active_batches.aggregate(avg=Avg('current_count'))['avg'] or 0,
-        'breeds': {},
         'mortality_stats': {}
     }
     

@@ -36,7 +36,8 @@ class Batch(models.Model):
     @property
     def age_in_days(self):
         from django.utils import timezone
-        return (timezone.now().date() - self.collection_date).days
+        import datetime
+        return (datetime.datetime.today() - self.collection_date).days
     
     @property
     def mortality_rate(self):
