@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('farms', '0002_initial'),
         ('reports', '0001_initial'),
-        ('flocks', '0002_initial'),
+        ('birds',  '0002_initial'),
     ]
 
     operations = [

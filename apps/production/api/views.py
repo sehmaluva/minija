@@ -114,10 +114,10 @@ def production_dashboard_view(request):
     
     # Get user's accessible flocks
     if user.role in ['admin']:
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         flocks = Flock.objects.filter(status='active')
     else:
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         flocks = Flock.objects.filter(
             Q(farm__owner=user) | 
             Q(farm__managers=user) |
@@ -208,10 +208,10 @@ def flock_production_analysis_view(request, flock_id):
         user = request.user
         
         if user.role in ['admin']:
-            from apps.flocks.models.models import Flock
+            from apps.birds.models.models import Flock
             flock = Flock.objects.get(id=flock_id)
         else:
-            from apps.flocks.models.models import Flock
+            from apps.birds.models.models import Flock
             flock = Flock.objects.get(
                 Q(farm__owner=user) | 
                 Q(farm__managers=user) |
@@ -296,5 +296,5 @@ def flock_production_analysis_view(request, flock_id):
         return Response(analysis_data)
         
     except:
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)

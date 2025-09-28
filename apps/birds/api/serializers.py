@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.flocks.models.models import Breed, Flock, FlockMovement, Batch
+from apps.birds.models.models import Breed, Flock, FlockMovement, Batch
 from apps.farms.api.serializers import FarmSerializer, BuildingSerializer
 from apps.users.api.serializers import UserSerializer
 

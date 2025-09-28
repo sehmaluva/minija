@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.flocks.models.models import Flock, Batch
+from apps.birds.models.models import Flock, Batch
 from decimal import Decimal
 
 User = get_user_model()

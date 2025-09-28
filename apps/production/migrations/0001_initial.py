@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('flocks', '0003_batch'),
+        ('birds',  '0003_batch'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

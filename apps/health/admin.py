@@ -11,7 +11,7 @@ class MedicationInline(admin.StackedInline):
 
 @admin.register(HealthRecord)
 class HealthRecordAdmin(admin.ModelAdmin):
-    list_display = ('flock', 'record_type', 'date', 'veterinarian', 'cost', 'created_by', 'created_at')
+    list_display = ('batch', 'record_type', 'date', 'veterinarian', 'cost', 'created_by', 'created_at')
     list_filter = ('record_type', 'date', 'veterinarian', 'created_at')
     search_fields = ('flock__flock_id', 'description')
     inlines = [VaccinationInline, MedicationInline]
@@ -19,7 +19,7 @@ class HealthRecordAdmin(admin.ModelAdmin):
 
 @admin.register(MortalityRecord)
 class MortalityRecordAdmin(admin.ModelAdmin):
-    list_display = ('flock', 'date', 'count', 'cause_category', 'age_at_death', 'recorded_by', 'created_at')
+    list_display = ('batch', 'date', 'count', 'cause_category', 'age_at_death', 'recorded_by', 'created_at')
     list_filter = ('cause_category', 'date', 'created_at')
     search_fields = ('flock__flock_id', 'specific_cause')
     readonly_fields = ('created_at',)

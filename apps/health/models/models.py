@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.flocks.models.models import Flock
+from apps.birds.models.models import Batch
 
 User = get_user_model()
 
@@ -17,7 +17,7 @@ class HealthRecord(models.Model):
         ('mortality', 'Mortality Record'),
     ]
     
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='health_records')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='health_records')
     record_type = models.CharField(max_length=20, choices=RECORD_TYPES)
     date = models.DateTimeField()
     description = models.TextField()
@@ -35,7 +35,7 @@ class HealthRecord(models.Model):
         ordering = ['-date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.record_type} - {self.date.strftime('%Y-%m-%d')}"
+        return f"{self.batch.batch_number} - {self.record_type} - {self.date.strftime('%Y-%m-%d')}"
 
 class Vaccination(models.Model):
     """
@@ -56,8 +56,7 @@ class Vaccination(models.Model):
         verbose_name_plural = 'Vaccinations'
     
     def __str__(self):
-        return f"{self.vaccine_name} - {self.health_record.flock.flock_id}"
-
+        return f"{self.vaccine_name} - {self.health_record.batch.batch_number}"
 class Medication(models.Model):
     """
     Model for tracking medications and treatments
@@ -77,7 +76,7 @@ class Medication(models.Model):
         verbose_name_plural = 'Medications'
     
     def __str__(self):
-        return f"{self.medication_name} - {self.health_record.flock.flock_id}"
+        return f"{self.medication_name} - {self.health_record. batch.batch_number}"
 
 class MortalityRecord(models.Model):
     """
@@ -94,7 +93,7 @@ class MortalityRecord(models.Model):
         ('other', 'Other'),
     ]
     
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='mortality_records')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='mortality_records')
     date = models.DateField()
     count = models.PositiveIntegerField()
     cause_category = models.CharField(max_length=20, choices=CAUSE_CATEGORIES)
@@ -111,4 +110,4 @@ class MortalityRecord(models.Model):
         ordering = ['-date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.count} birds - {self.date}"
+        return f"{self.batch.batch_number} - {self.count} birds - {self.date}"

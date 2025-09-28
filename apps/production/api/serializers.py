@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.production.models.models import FeedRecord, EggProduction, WeightRecord, EnvironmentalRecord
-from apps.flocks.api.serializers import FlockSerializer
+from apps.birds.api.serializers import FlockSerializer
 from apps.users.api.serializers import UserSerializer
 
 class FeedRecordSerializer(serializers.ModelSerializer):

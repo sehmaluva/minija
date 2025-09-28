@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.flocks.models.models import Breed, Flock, FlockMovement, Batch
+from apps.birds.models.models import Breed, Flock, FlockMovement, Batch
 
 @admin.register(Batch)
 class BatchAdmin(admin.ModelAdmin):

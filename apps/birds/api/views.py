@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q, Sum, Avg
-from apps.flocks.models.models import Batch, Breed, Flock, FlockMovement
-from apps.flocks.api.serializers import (
+from apps.birds.models.models import Batch, Breed, Flock, FlockMovement
+from apps.birds.api.serializers import (
     BreedSerializer, FlockSerializer, FlockMovementSerializer, FlockSummarySerializer, BatchSerializer
 )
 from apps.users.permissions import CanManageFlocks, CanManageBatches

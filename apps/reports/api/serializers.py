@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from apps.reports.models.models import Report, Alert
 from apps.farms.api.serializers import FarmSerializer
-from apps.flocks.api.serializers import FlockSerializer
+from apps.birds.api.serializers import FlockSerializer
 from apps.users.api.serializers import UserSerializer
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         report = Report.objects.create(**validated_data)
         
         if flock_ids:
-            from apps.flocks.models.models import Flock
+            from apps.birds.models.models import Flock
             flocks = Flock.objects.filter(id__in=flock_ids, farm=report.farm)
             report.flocks.set(flocks)
         

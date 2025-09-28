@@ -112,12 +112,12 @@ def analytics_dashboard_view(request):
     # Get user's accessible farms and flocks
     if user.role in ['admin']:
         from apps.farms.models.models import Farm
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         farms = Farm.objects.filter(is_active=True)
         flocks = Flock.objects.filter(status='active')
     else:
         from apps.farms.models.models import Farm
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         farms = Farm.objects.filter(
             Q(owner=user) | Q(managers=user),
             is_active=True
@@ -291,7 +291,7 @@ def generate_report_view(request):
     
     try:
         from apps.farms.models.models import Farm
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         
         # Validate farm access
         user = request.user
@@ -439,7 +439,7 @@ def create_alert_view(request):
     
     try:
         from apps.farms.models.models import Farm
-        from apps.flocks.models.models import Flock
+        from apps.birds.models.models import Flock
         
         # Validate farm access
         user = request.user

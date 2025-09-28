@@ -10,7 +10,7 @@ from apps.health.models.models import HealthRecord, MortalityRecord
 from .serializers import (
     HealthRecordSerializer, HealthRecordCreateSerializer, MortalityRecordSerializer
 )
-from apps.users.permissions import IsVeterinarianOrManager
+from apps.users.permissions import IsAdminOrOwner
 
 class HealthRecordListCreateView(generics.ListCreateAPIView):
     """
@@ -18,8 +18,8 @@ class HealthRecordListCreateView(generics.ListCreateAPIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['record_type', 'flock', 'date', 'veterinarian']
-    search_fields = ['description', 'flock__flock_id']
+    filterset_fields = ['record_type', 'batch', 'date', 'user']
+    search_fields = ['description', 'batch__batch_number']
     ordering_fields = ['date', 'created_at']
     ordering = ['-date']
     
@@ -32,23 +32,15 @@ class HealthRecordListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         if user.role in ['admin']:
             return HealthRecord.objects.all()
-        elif user.role in ['veterinarian']:
-            return HealthRecord.objects.filter(
-                Q(veterinarian=user) | Q(created_by=user)
-            )
         else:
-            return HealthRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(created_by=user)
-            ).distinct()
+            return HealthRecord.objects.filter(created_by=user).distinct()
 
 class HealthRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating and deleting a health record
     """
     serializer_class = HealthRecordSerializer
-    permission_classes = [IsVeterinarianOrManager]
+    permission_classes = [IsAdminOrOwner]
     
     def get_queryset(self):
         user = self.request.user
@@ -59,11 +51,7 @@ class HealthRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
                 Q(veterinarian=user) | Q(created_by=user)
             )
         else:
-            return HealthRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(created_by=user)
-            ).distinct()
+            return HealthRecord.objects.filter(created_by=user).distinct()
 
 class MortalityRecordListCreateView(generics.ListCreateAPIView):
     """
@@ -72,7 +60,7 @@ class MortalityRecordListCreateView(generics.ListCreateAPIView):
     serializer_class = MortalityRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['cause_category', 'flock', 'date']
+    filterset_fields = ['cause_category', 'batch', 'date']
     search_fields = ['specific_cause', 'flock__flock_id']
     ordering_fields = ['date', 'count', 'created_at']
     ordering = ['-date']
@@ -82,11 +70,7 @@ class MortalityRecordListCreateView(generics.ListCreateAPIView):
         if user.role in ['admin']:
             return MortalityRecord.objects.all()
         else:
-            return MortalityRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return MortalityRecord.objects.filter(created_by=user).distinct()
 
 class MortalityRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -100,11 +84,7 @@ class MortalityRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
         if user.role in ['admin']:
             return MortalityRecord.objects.all()
         else:
-            return MortalityRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return MortalityRecord.objects.filter(created_by=user).distinct()
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -114,27 +94,23 @@ def health_dashboard_view(request):
     """
     user = request.user
     
-    # Get user's accessible flocks
+    # Get user's accessible batch
     if user.role in ['admin']:
-        from flocks.models import Flock
-        flocks = Flock.objects.filter(status='active')
+        from birds.models.models import Batch
+        batches = Batch.objects.filter(status='active')
     else:
-        from flocks.models import Flock
-        flocks = Flock.objects.filter(
-            Q(farm__owner=user) | 
-            Q(farm__managers=user) |
-            Q(created_by=user),
-            status='active'
+        from apps.birds.models.models import Batch
+        batches = Batch.objects.filter(created_by=user, status='active'
         ).distinct()
     
     # Recent health records
     recent_records = HealthRecord.objects.filter(
-        flock__in=flocks
+        batch__in=batches
     ).order_by('-date')[:10]
     
     # Vaccination schedule (upcoming)
     upcoming_vaccinations = HealthRecord.objects.filter(
-        flock__in=flocks,
+        flock__in=batches,
         record_type='vaccination',
         vaccination_details__next_vaccination_date__gte=timezone.now().date(),
         vaccination_details__next_vaccination_date__lte=timezone.now().date() + timedelta(days=30)
@@ -143,7 +119,7 @@ def health_dashboard_view(request):
     # Mortality statistics (last 30 days)
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
     recent_mortality = MortalityRecord.objects.filter(
-        flock__in=flocks,
+        flock__in=batches,
         date__gte=thirty_days_ago
     )
     
@@ -155,17 +131,17 @@ def health_dashboard_view(request):
     alerts = []
     
     # High mortality rate alert
-    for flock in flocks:
-        recent_flock_mortality = recent_mortality.filter(flock=flock).aggregate(
+    for batch in batches:
+        recent_flock_mortality = recent_mortality.filter(batch=batch).aggregate(
             total=Sum('count')
         )['total'] or 0
         
         if recent_flock_mortality > 0:
-            mortality_rate = (recent_flock_mortality / flock.current_count) * 100
+            mortality_rate = (recent_flock_mortality / batch.current_count) * 100
             if mortality_rate > 5:  # Alert if mortality rate > 5% in 30 days
                 alerts.append({
                     'type': 'high_mortality',
-                    'flock_id': flock.flock_id,
+                    'batch_id': batch.batch_number,
                     'message': f'High mortality rate: {mortality_rate:.1f}% in last 30 days',
                     'severity': 'high' if mortality_rate > 10 else 'medium'
                 })
@@ -180,10 +156,10 @@ def health_dashboard_view(request):
         },
         'health_alerts': alerts,
         'summary': {
-            'total_active_flocks': flocks.count(),
-            'total_health_records': HealthRecord.objects.filter(flock__in=flocks).count(),
+            'total_active_flocks': batches.count(),
+            'total_health_records': HealthRecord.objects.filter(flock__in=batch).count(),
             'vaccinations_this_month': HealthRecord.objects.filter(
-                flock__in=flocks,
+                flock__in=batch,
                 record_type='vaccination',
                 date__gte=timezone.now().date().replace(day=1)
             ).count()
@@ -194,30 +170,30 @@ def health_dashboard_view(request):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def flock_health_history_view(request, flock_id):
+def flock_health_history_view(request, batch_id):
     """
-    API view for getting complete health history of a flock
+    API view for getting complete health history of a batch
     """
     try:
         user = request.user
         
         if user.role in ['admin']:
-            from flocks.models import Flock
-            flock = Flock.objects.get(id=flock_id)
+            from birds.models.models import Batch
+            batch = Batch.objects.get(id=batch_id)
         else:
-            from flocks.models import Flock
-            flock = Flock.objects.get(
+            from birds.models.models import Batch
+            batch = Batch.objects.get(
                 Q(farm__owner=user) | 
                 Q(farm__managers=user) |
                 Q(created_by=user),
-                id=flock_id
+                id=batch_id
             )
         
         # Get all health records
-        health_records = flock.health_records.all().order_by('-date')
+        health_records = batch.health_records.all().order_by('-date')
         
         # Get mortality records
-        mortality_records = flock.mortality_records.all().order_by('-date')
+        mortality_records = batch.mortality_records.all().order_by('-date')
         
         # Calculate health metrics
         total_vaccinations = health_records.filter(record_type='vaccination').count()
@@ -225,12 +201,11 @@ def flock_health_history_view(request, flock_id):
         total_deaths = mortality_records.aggregate(total=Sum('count'))['total'] or 0
         
         health_history = {
-            'flock': {
-                'id': flock.id,
-                'flock_id': flock.flock_id,
-                'breed': flock.breed.name,
-                'current_count': flock.current_count,
-                'age_in_days': flock.age_in_days
+            'batch': {
+                'id': batch.id,
+                'batch_id': batch.batch_number,
+                'current_count': batch.current_count,
+                'age_in_days': batch.age_in_days
             },
             'health_records': HealthRecordSerializer(health_records, many=True).data,
             'mortality_records': MortalityRecordSerializer(mortality_records, many=True).data,
@@ -238,7 +213,7 @@ def flock_health_history_view(request, flock_id):
                 'total_vaccinations': total_vaccinations,
                 'total_treatments': total_treatments,
                 'total_deaths': total_deaths,
-                'mortality_rate': (total_deaths / flock.initial_count * 100) if flock.initial_count > 0 else 0,
+                'mortality_rate': (total_deaths / batch.initial_count * 100) if batch.initial_count > 0 else 0,
                 'health_cost': health_records.aggregate(total=Sum('cost'))['total'] or 0
             }
         }
@@ -246,5 +221,5 @@ def flock_health_history_view(request, flock_id):
         return Response(health_history)
         
     except:
-        from flocks.models import Flock
-        return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)
+        from birds.models.models import Batch
+        return Response({'error': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)

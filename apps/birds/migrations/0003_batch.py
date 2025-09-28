@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('flocks', '0002_initial'),
+        ('birds', '0002_initial'),
     ]
 
     operations = [

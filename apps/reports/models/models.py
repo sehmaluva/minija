@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from apps.farms.models.models import Farm
-from apps.flocks.models.models import Flock
+from apps.birds.models.models import Flock
 
 User = get_user_model()
 

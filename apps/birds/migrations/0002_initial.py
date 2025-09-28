@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('farms', '0002_initial'),
-        ('flocks', '0001_initial'),
+        ('birds', '0001_initial'),
     ]
 
     operations = [

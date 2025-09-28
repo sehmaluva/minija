@@ -41,7 +41,7 @@ INSTALLED_APPS= [
     # custom apps (keep farms/health registered to avoid import errors; UI will hide them)
     'apps.farms',
     'apps.health',
-    'apps.flocks',
+    'apps.birds',
     'apps.production',
     'apps.reports',
     'apps.users',

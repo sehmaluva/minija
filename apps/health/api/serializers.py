@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.health.models.models import HealthRecord, Vaccination, Medication, MortalityRecord
-from apps.flocks.api.serializers import FlockSerializer
+from apps.birds.api.serializers import FlockSerializer
 from apps.users.api.serializers import UserSerializer
 
 class VaccinationSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class HealthRecordSerializer(serializers.ModelSerializer):
     """
     Serializer for HealthRecord model
     """
-    flock_id = serializers.CharField(source='flock.flock_id', read_only=True)
+    batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     veterinarian_name = serializers.CharField(source='veterinarian.full_name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     vaccination_details = VaccinationSerializer(read_only=True)
@@ -38,7 +38,7 @@ class HealthRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthRecord
         fields = [
-            'id', 'flock', 'flock_id', 'record_type', 'date', 'description',
+            'id', 'batch', 'batch_id', 'record_type', 'date', 'description',
             'veterinarian', 'veterinarian_name', 'cost', 'notes',
             'created_by', 'created_by_name', 'created_at', 'updated_at',
             'vaccination_details', 'medication_details'
@@ -59,7 +59,7 @@ class HealthRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthRecord
         fields = [
-            'flock', 'record_type', 'date', 'description', 'veterinarian',
+            'batch', 'record_type', 'date', 'description', 'veterinarian',
             'cost', 'notes', 'vaccination_details', 'medication_details'
         ]
     
@@ -82,13 +82,13 @@ class MortalityRecordSerializer(serializers.ModelSerializer):
     """
     Serializer for MortalityRecord model
     """
-    flock_id = serializers.CharField(source='flock.flock_id', read_only=True)
+    batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
     
     class Meta:
         model = MortalityRecord
         fields = [
-            'id', 'flock', 'flock_id', 'date', 'count', 'cause_category',
+            'id', 'batch', 'batch_id', 'date', 'count', 'cause_category',
             'specific_cause', 'age_at_death', 'notes', 'recorded_by',
             'recorded_by_name', 'created_at'
         ]
@@ -98,11 +98,11 @@ class MortalityRecordSerializer(serializers.ModelSerializer):
         validated_data['recorded_by'] = self.context['request'].user
         mortality_record = super().create(validated_data)
         
-        # Update flock current count
-        flock = mortality_record.flock
-        flock.current_count = max(0, flock.current_count - mortality_record.count)
-        if flock.current_count == 0:
-            flock.status = 'deceased'
-        flock.save()
+        # Update batch current count
+        batch = mortality_record.batch
+        batch.current_count = max(0, batch.current_count - mortality_record.count)
+        if batch.current_count == 0:
+            batch.status = 'deceased'
+        batch.save()
         
         return mortality_record

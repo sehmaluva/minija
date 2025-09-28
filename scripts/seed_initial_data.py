@@ -18,7 +18,7 @@ django.setup()
 from django.contrib.auth import get_user_model
 # from apps.users.models.models import User
 from apps.farms.models.models import Farm, Building
-from apps.flocks.models.models import Breed, Flock
+from apps.birds.models.models import Breed, Flock
 from apps.health.models.models import HealthRecord, Vaccination
 from apps.production.models.models import FeedRecord, EggProduction
 

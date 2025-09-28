@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('flocks', '0003_batch'),
+        ('birds', '0003_batch'),
     ]
 
     operations = [

@@ -17,7 +17,7 @@ urlpatterns = [
     # API endpoints
     path('api/auth/', include('apps.users.api.urls')),
     # Removed farms/health API includes for broiler-focused product
-    path('api/flocks/', include('apps.flocks.api.urls')),
+    path('api/flocks/', include('apps.birds.api.urls')),
     path('api/accounting/', include('apps.accounting.api.urls')),
     path('api/orders/', include('apps.orders.api.urls')),
     path('api/forecast/', include('apps.forecast.api.urls')),

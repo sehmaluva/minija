@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.flocks.api import views
+from apps.birds.api import views
 
 urlpatterns = [
     # Batch URLd
