@@ -6,15 +6,7 @@ class IsOwnerOrManager(permissions.BasePermission):
     """
     
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['owner', 'manager', 'admin']
-
-class IsVeterinarianOrManager(permissions.BasePermission):
-    """
-    Custom permission for veterinarian or manager access.
-    """
-    
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['veterinarian', 'manager', 'admin', 'owner']
+        return request.user and request.user.is_authenticated and request.user.role in ['user','admin']
 
 class IsAdminOrOwner(permissions.BasePermission):
     """
@@ -22,7 +14,7 @@ class IsAdminOrOwner(permissions.BasePermission):
     """
     
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['admin', 'owner']
+        return request.user and request.user.is_authenticated and request.user.role in ['admin', 'user']
 
 class CanManageFlocks(permissions.BasePermission):
     """
@@ -30,12 +22,20 @@ class CanManageFlocks(permissions.BasePermission):
     """
     
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['manager', 'admin', 'owner']
+        return request.user and request.user.is_authenticated and request.user.role in ['user', 'admin']
 
+class CanManageBatches(permissions.BasePermission):
+    """
+    Custom permission for Batches management.
+    """
+    
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role in ['user', 'admin']
+    
 class CanViewReports(permissions.BasePermission):
     """
     Custom permission for viewing reports.
     """
     
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['manager', 'admin', 'owner', 'veterinarian']
+        return request.user and request.user.is_authenticated and request.user.role in ['user', 'admin']
