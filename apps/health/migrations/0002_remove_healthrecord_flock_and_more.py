@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('birds', '0004_batch_status'),
+        # ('birds', '0004_batch_status'),  # Temporarily removed to fix migration order
         ('health', '0001_initial'),
     ]
 
