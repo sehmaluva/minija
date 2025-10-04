@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.farms.models.models import Farm
 from apps.birds.models.models import Flock
 
 User = get_user_model()
@@ -24,7 +23,7 @@ class Report(models.Model):
         ('csv', 'CSV'),
     ]
     
-    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='reports')
+    # Removed farm foreign key in simplified multi-tenant model
     title = models.CharField(max_length=200)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
     report_format = models.CharField(max_length=10, choices=REPORT_FORMATS)
@@ -66,7 +65,7 @@ class Alert(models.Model):
         ('critical', 'Critical'),
     ]
     
-    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='alerts')
+    # Removed farm foreign key; optional flock reference retained
     flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='alerts', null=True, blank=True)
     alert_type = models.CharField(max_length=20, choices=ALERT_TYPES)
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS)
@@ -76,6 +75,7 @@ class Alert(models.Model):
     is_resolved = models.BooleanField(default=False)
     resolved_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='resolved_alerts', null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_alerts', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

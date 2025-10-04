@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from apps.birds.models.models import Breed, Flock, FlockMovement, Batch
-from apps.farms.api.serializers import FarmSerializer, BuildingSerializer
 from apps.users.api.serializers import UserSerializer
 
 class BatchSerializer(serializers.ModelSerializer):
@@ -86,26 +85,22 @@ class BreedSerializer(serializers.ModelSerializer):
         return obj.flocks.filter(status='active').count()
 
 class FlockSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Flock model
-    """
-    farm_name = serializers.CharField(source='farm.name', read_only=True)
-    building_name = serializers.CharField(source='building.name', read_only=True)
+    """Serializer for Flock model (farm/building removed)."""
     breed_name = serializers.CharField(source='breed.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     age_in_days = serializers.ReadOnlyField()
     mortality_rate = serializers.ReadOnlyField()
     age_in_weeks = serializers.SerializerMethodField()
     survival_rate = serializers.SerializerMethodField()
-    
+    location = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = Flock
         fields = [
-            'id', 'farm', 'farm_name', 'building', 'building_name', 'breed', 'breed_name',
-            'flock_id', 'flock_type', 'initial_count', 'current_count', 'hatch_date',
-            'source', 'status', 'notes', 'created_by', 'created_by_name',
-            'created_at', 'updated_at', 'age_in_days', 'age_in_weeks',
-            'mortality_rate', 'survival_rate'
+            'id', 'breed', 'breed_name', 'flock_id', 'flock_type', 'initial_count',
+            'current_count', 'hatch_date', 'source', 'status', 'notes', 'location',
+            'created_by', 'created_by_name', 'created_at', 'updated_at', 'age_in_days',
+            'age_in_weeks', 'mortality_rate', 'survival_rate'
         ]
         read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
     
@@ -129,17 +124,7 @@ class FlockSerializer(serializers.ModelSerializer):
         if current_count and initial_count and current_count > initial_count:
             raise serializers.ValidationError("Current count cannot exceed initial count")
         
-        # Validate building capacity
-        building = attrs.get('building')
-        if building and current_count:
-            existing_birds = sum(
-                flock.current_count for flock in building.flocks.filter(status='active')
-                if flock != self.instance
-            )
-            if existing_birds + current_count > building.capacity:
-                raise serializers.ValidationError(
-                    f"Building capacity exceeded. Available space: {building.capacity - existing_birds}"
-                )
+        # Building capacity validation removed
         
         return attrs
     
@@ -148,20 +133,17 @@ class FlockSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class FlockMovementSerializer(serializers.ModelSerializer):
-    """
-    Serializer for FlockMovement model
-    """
+    """Serializer for FlockMovement model (building removed)."""
     flock_id = serializers.CharField(source='flock.flock_id', read_only=True)
-    from_building_name = serializers.CharField(source='from_building.name', read_only=True)
-    to_building_name = serializers.CharField(source='to_building.name', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
-    
+    from_location = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    to_location = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = FlockMovement
         fields = [
-            'id', 'flock', 'flock_id', 'movement_type', 'from_building', 'from_building_name',
-            'to_building', 'to_building_name', 'bird_count', 'movement_date',
-            'reason', 'recorded_by', 'recorded_by_name', 'created_at'
+            'id', 'flock', 'flock_id', 'movement_type', 'from_location', 'to_location',
+            'bird_count', 'movement_date', 'reason', 'recorded_by', 'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
     
@@ -176,17 +158,7 @@ class FlockMovementSerializer(serializers.ModelSerializer):
                 f"Bird count ({bird_count}) exceeds current flock count ({flock.current_count})"
             )
         
-        # Validate building capacity for transfers
-        if movement_type == 'transfer':
-            to_building = attrs.get('to_building')
-            if to_building:
-                existing_birds = sum(
-                    flock.current_count for flock in to_building.flocks.filter(status='active')
-                )
-                if existing_birds + bird_count > to_building.capacity:
-                    raise serializers.ValidationError(
-                        f"Destination building capacity exceeded. Available space: {to_building.capacity - existing_birds}"
-                    )
+        # No building capacity validation anymore
         
         return attrs
     
@@ -201,27 +173,22 @@ class FlockMovementSerializer(serializers.ModelSerializer):
             if flock.current_count <= 0:
                 flock.status = movement.movement_type
                 flock.current_count = 0
-        elif movement.movement_type == 'transfer':
-            # For transfers, we might need to create a new flock record or update building
-            flock.building = movement.to_building
+        elif movement.movement_type == 'transfer' and movement.to_location:
+            flock.location = movement.to_location
         
         flock.save()
         return movement
 
 class FlockSummarySerializer(serializers.ModelSerializer):
-    """
-    Serializer for Flock summary with basic info
-    """
+    """Serializer for Flock summary (no building)."""
     breed_name = serializers.CharField(source='breed.name', read_only=True)
-    building_name = serializers.CharField(source='building.name', read_only=True)
     age_in_weeks = serializers.SerializerMethodField()
     survival_rate = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Flock
         fields = [
-            'id', 'flock_id', 'flock_type', 'breed_name', 'building_name',
-            'current_count', 'age_in_weeks', 'survival_rate', 'status'
+            'id', 'flock_id', 'flock_type', 'breed_name', 'current_count', 'age_in_weeks', 'survival_rate', 'status', 'location'
         ]
     
     def get_age_in_weeks(self, obj):

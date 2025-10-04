@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.farms.models.models import Farm, Building
+"""Broiler-focused bird models (farms/buildings removed)."""
 
 User = get_user_model()
 
@@ -84,8 +84,8 @@ class Flock(models.Model):
         ('transferred', 'Transferred'),
     ]
     
-    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='flocks')
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='flocks')
+    # Removed farm & building foreign keys in clean reset.
+    location = models.CharField(max_length=120, blank=True, null=True, help_text="Optional location / house tag")
     breed = models.ForeignKey(Breed, on_delete=models.CASCADE, related_name='flocks')
     flock_id = models.CharField(max_length=50, unique=True)
     flock_type = models.CharField(max_length=20, choices=FLOCK_TYPES)
@@ -133,8 +133,9 @@ class FlockMovement(models.Model):
     
     flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='movements')
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
-    from_building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='outgoing_movements', null=True, blank=True)
-    to_building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='incoming_movements', null=True, blank=True)
+    # Replaced building transfers with free-text locations
+    from_location = models.CharField(max_length=120, blank=True, null=True)
+    to_location = models.CharField(max_length=120, blank=True, null=True)
     bird_count = models.PositiveIntegerField()
     movement_date = models.DateTimeField()
     reason = models.TextField(blank=True, null=True)

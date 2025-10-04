@@ -23,7 +23,7 @@ CSRF_TRUSTED_ORIGINS =[
 ]
 
 INSTALLED_APPS= [
-    #django
+    # django core
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -31,7 +31,7 @@ INSTALLED_APPS= [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    #third part apps
+    # third party
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -39,8 +39,7 @@ INSTALLED_APPS= [
     'django_filters',
     'drf_spectacular',
 
-    # custom apps (keep farms/health registered to avoid import errors; UI will hide them)
-    'apps.farms',
+    # custom apps (broiler-focused: farms module removed in clean reset)
     'apps.health',
     'apps.birds',
     'apps.production',
@@ -49,7 +48,6 @@ INSTALLED_APPS= [
     'apps.accounting',
     'apps.orders',
     'apps.forecast',
-
 ]
 
 MIDDLEWARE = [

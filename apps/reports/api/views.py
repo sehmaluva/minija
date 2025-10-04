@@ -19,8 +19,8 @@ class ReportListCreateView(generics.ListCreateAPIView):
     """
     permission_classes = [CanViewReports]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['report_type', 'report_format', 'farm']
-    search_fields = ['title', 'farm__name']
+    filterset_fields = ['report_type', 'report_format']
+    search_fields = ['title']
     ordering_fields = ['generated_at', 'title']
     ordering = ['-generated_at']
     
@@ -31,14 +31,9 @@ class ReportListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Report.objects.all()
-        else:
-            return Report.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(generated_by=user)
-            ).distinct()
+        return Report.objects.filter(generated_by=user).distinct()
 
 class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -49,14 +44,9 @@ class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Report.objects.all()
-        else:
-            return Report.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(generated_by=user)
-            ).distinct()
+        return Report.objects.filter(generated_by=user).distinct()
 
 class AlertListView(generics.ListAPIView):
     """
@@ -65,20 +55,16 @@ class AlertListView(generics.ListAPIView):
     serializer_class = AlertSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['alert_type', 'severity', 'is_read', 'is_resolved', 'farm']
+    filterset_fields = ['alert_type', 'severity', 'is_read', 'is_resolved']
     search_fields = ['title', 'message']
     ordering_fields = ['created_at', 'severity']
     ordering = ['-created_at']
     
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Alert.objects.all()
-        else:
-            return Alert.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user)
-            ).distinct()
+        return Alert.objects.filter(created_by=user).distinct()
 
 class AlertDetailView(generics.RetrieveUpdateAPIView):
     """
@@ -93,13 +79,9 @@ class AlertDetailView(generics.RetrieveUpdateAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Alert.objects.all()
-        else:
-            return Alert.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user)
-            ).distinct()
+        return Alert.objects.filter(created_by=user).distinct()
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -109,41 +91,20 @@ def analytics_dashboard_view(request):
     """
     user = request.user
     
-    # Get user's accessible farms and flocks
-    if user.role in ['admin']:
-        from apps.farms.models.models import Farm
-        from apps.birds.models.models import Flock
-        farms = Farm.objects.filter(is_active=True)
+    # Simplified: user-scope only, all active flocks they created (or all if admin)
+    from apps.birds.models.models import Flock
+    if getattr(user, 'role', None) in ['admin']:
         flocks = Flock.objects.filter(status='active')
     else:
-        from apps.farms.models.models import Farm
-        from apps.birds.models.models import Flock
-        farms = Farm.objects.filter(
-            Q(owner=user) | Q(managers=user),
-            is_active=True
-        ).distinct()
-        flocks = Flock.objects.filter(
-            Q(farm__owner=user) | 
-            Q(farm__managers=user) |
-            Q(created_by=user),
-            status='active'
-        ).distinct()
+        flocks = Flock.objects.filter(created_by=user, status='active')
     
     # Time periods for analysis
     today = timezone.now().date()
     last_30_days = today - timedelta(days=30)
     last_7_days = today - timedelta(days=7)
     
-    # Farm statistics
-    farm_stats = {
-        'total_farms': farms.count(),
-        'total_buildings': sum(farm.buildings.filter(is_active=True).count() for farm in farms),
-        'total_capacity': sum(
-            sum(building.capacity for building in farm.buildings.filter(is_active=True))
-            for farm in farms
-        ),
-        'farms_by_state': farms.values('state').annotate(count=Count('id')).order_by('-count')[:5]
-    }
+    # Farm stats removed in simplified model
+    farm_stats = {}
     
     # Flock statistics
     total_birds = flocks.aggregate(total=Sum('current_count'))['total'] or 0
@@ -240,12 +201,12 @@ def analytics_dashboard_view(request):
             for flock in flocks
         ) / flocks.count() if flocks.count() > 0 else 0,
         'average_flock_age': flocks.aggregate(avg=Avg('age_in_days'))['avg'] or 0,
-        'capacity_utilization': (total_birds / farm_stats['total_capacity'] * 100) if farm_stats['total_capacity'] > 0 else 0
+    'capacity_utilization': 0
     }
     
     # Recent alerts
     recent_alerts = Alert.objects.filter(
-        farm__in=farms,
+        created_by=user,
         created_at__gte=timezone.now() - timedelta(days=7),
         is_resolved=False
     ).order_by('-created_at')[:10]
@@ -262,7 +223,7 @@ def analytics_dashboard_view(request):
         'performance_indicators': performance_indicators,
         'recent_alerts': AlertSerializer(recent_alerts, many=True).data,
         'summary': {
-            'total_farms': farm_stats['total_farms'],
+            'total_farms': 0,
             'total_flocks': flock_stats['total_flocks'],
             'total_birds': total_birds,
             'unresolved_alerts': recent_alerts.count()
@@ -278,30 +239,20 @@ def generate_report_view(request):
     API view for generating custom reports
     """
     report_type = request.data.get('report_type')
-    farm_id = request.data.get('farm_id')
+    # farm removed
     start_date = request.data.get('start_date')
     end_date = request.data.get('end_date')
     flock_ids = request.data.get('flock_ids', [])
     
-    if not all([report_type, farm_id, start_date, end_date]):
+    if not all([report_type, start_date, end_date]):
         return Response(
             {'error': 'Missing required parameters'}, 
             status=status.HTTP_400_BAD_REQUEST
         )
     
     try:
-        from apps.farms.models.models import Farm
         from apps.birds.models.models import Flock
-        
-        # Validate farm access
         user = request.user
-        if user.role in ['admin']:
-            farm = Farm.objects.get(id=farm_id)
-        else:
-            farm = Farm.objects.get(
-                Q(owner=user) | Q(managers=user),
-                id=farm_id
-            )
         
         # Parse dates
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -309,9 +260,9 @@ def generate_report_view(request):
         
         # Get flocks
         if flock_ids:
-            flocks = Flock.objects.filter(id__in=flock_ids, farm=farm)
+            flocks = Flock.objects.filter(id__in=flock_ids, created_by=user)
         else:
-            flocks = farm.flocks.all()
+            flocks = Flock.objects.filter(created_by=user)
         
         # Generate report data based on type
         report_data = {}
@@ -394,7 +345,6 @@ def generate_report_view(request):
         
         # Create report record
         report = Report.objects.create(
-            farm=farm,
             title=f"{report_type.title()} Report - {start_date} to {end_date}",
             report_type=report_type,
             report_format='json',
@@ -408,13 +358,11 @@ def generate_report_view(request):
             report.flocks.set(flocks)
         
         return Response({
-            'report_id': report.id,
+            'report_id': getattr(report, 'id', None),
             'report_data': report_data,
             'message': 'Report generated successfully'
         })
         
-    except Farm.DoesNotExist:
-        return Response({'error': 'Farm not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -424,44 +372,34 @@ def create_alert_view(request):
     """
     API view for creating system alerts
     """
-    farm_id = request.data.get('farm_id')
+    # farm removed
     flock_id = request.data.get('flock_id')
     alert_type = request.data.get('alert_type')
     severity = request.data.get('severity')
     title = request.data.get('title')
     message = request.data.get('message')
     
-    if not all([farm_id, alert_type, severity, title, message]):
+    if not all([alert_type, severity, title, message]):
         return Response(
             {'error': 'Missing required parameters'}, 
             status=status.HTTP_400_BAD_REQUEST
         )
     
     try:
-        from apps.farms.models.models import Farm
         from apps.birds.models.models import Flock
-        
-        # Validate farm access
         user = request.user
-        if user.role in ['admin']:
-            farm = Farm.objects.get(id=farm_id)
-        else:
-            farm = Farm.objects.get(
-                Q(owner=user) | Q(managers=user),
-                id=farm_id
-            )
         
         flock = None
         if flock_id:
-            flock = Flock.objects.get(id=flock_id, farm=farm)
+            flock = Flock.objects.get(id=flock_id, created_by=user)
         
         alert = Alert.objects.create(
-            farm=farm,
             flock=flock,
             alert_type=alert_type,
             severity=severity,
             title=title,
-            message=message
+            message=message,
+            created_by=user
         )
         
         return Response({
@@ -469,8 +407,6 @@ def create_alert_view(request):
             'message': 'Alert created successfully'
         })
         
-    except Farm.DoesNotExist:
-        return Response({'error': 'Farm not found'}, status=status.HTTP_404_NOT_FOUND)
     except Flock.DoesNotExist:
         return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:

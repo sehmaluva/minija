@@ -36,14 +36,14 @@ class BreedAdmin(admin.ModelAdmin):
 
 @admin.register(Flock)
 class FlockAdmin(admin.ModelAdmin):
-    list_display = ('flock_id', 'farm', 'breed', 'flock_type', 'current_count', 'status', 'age_in_days', 'created_at')
-    list_filter = ('flock_type', 'status', 'farm', 'breed', 'created_at')
-    search_fields = ('flock_id', 'farm__name', 'breed__name')
+    list_display = ('flock_id', 'breed', 'flock_type', 'location', 'current_count', 'status', 'age_in_days', 'created_at')
+    list_filter = ('flock_type', 'status', 'breed', 'created_at')
+    search_fields = ('flock_id', 'breed__name', 'location')
     readonly_fields = ('created_at', 'updated_at', 'age_in_days', 'mortality_rate')
-    
+
     fieldsets = (
         ('Basic Information', {
-            'fields': ('farm', 'building', 'breed', 'flock_id', 'flock_type')
+            'fields': ('breed', 'flock_id', 'flock_type', 'location')
         }),
         ('Flock Details', {
             'fields': ('initial_count', 'current_count', 'hatch_date', 'source', 'status')
@@ -63,17 +63,17 @@ class FlockAdmin(admin.ModelAdmin):
 
 @admin.register(FlockMovement)
 class FlockMovementAdmin(admin.ModelAdmin):
-    list_display = ('flock', 'movement_type', 'bird_count', 'movement_date', 'recorded_by', 'created_at')
+    list_display = ('flock', 'movement_type', 'from_location', 'to_location', 'bird_count', 'movement_date', 'recorded_by', 'created_at')
     list_filter = ('movement_type', 'movement_date', 'created_at')
-    search_fields = ('flock__flock_id', 'reason')
+    search_fields = ('flock__flock_id', 'reason', 'from_location', 'to_location')
     readonly_fields = ('created_at',)
-    
+
     fieldsets = (
         ('Movement Information', {
             'fields': ('flock', 'movement_type', 'bird_count', 'movement_date')
         }),
         ('Location', {
-            'fields': ('from_building', 'to_building')
+            'fields': ('from_location', 'to_location')
         }),
         ('Details', {
             'fields': ('reason', 'recorded_by')

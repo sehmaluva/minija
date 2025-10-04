@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from apps.reports.models.models import Report, Alert
-from apps.farms.api.serializers import FarmSerializer
 from apps.birds.api.serializers import FlockSerializer
 from apps.users.api.serializers import UserSerializer
 
@@ -8,14 +7,13 @@ class ReportSerializer(serializers.ModelSerializer):
     """
     Serializer for Report model
     """
-    farm_name = serializers.CharField(source='farm.name', read_only=True)
     generated_by_name = serializers.CharField(source='generated_by.full_name', read_only=True)
     flocks_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Report
         fields = [
-            'id', 'farm', 'farm_name', 'title', 'report_type', 'report_format',
+            'id', 'title', 'report_type', 'report_format',
             'start_date', 'end_date', 'flocks', 'flocks_count', 'file_path',
             'parameters', 'generated_by', 'generated_by_name', 'generated_at'
         ]
@@ -41,7 +39,7 @@ class ReportCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            'farm', 'title', 'report_type', 'report_format',
+            'title', 'report_type', 'report_format',
             'start_date', 'end_date', 'flock_ids', 'parameters'
         ]
     
@@ -57,31 +55,31 @@ class ReportCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         flock_ids = validated_data.pop('flock_ids', [])
         validated_data['generated_by'] = self.context['request'].user
-        
+
         report = Report.objects.create(**validated_data)
-        
+
         if flock_ids:
             from apps.birds.models.models import Flock
-            flocks = Flock.objects.filter(id__in=flock_ids, farm=report.farm)
+            flocks = Flock.objects.filter(id__in=flock_ids)
             report.flocks.set(flocks)
-        
+
         return report
 
 class AlertSerializer(serializers.ModelSerializer):
     """
     Serializer for Alert model
     """
-    farm_name = serializers.CharField(source='farm.name', read_only=True)
     flock_id = serializers.CharField(source='flock.flock_id', read_only=True)
     resolved_by_name = serializers.CharField(source='resolved_by.full_name', read_only=True)
     
     class Meta:
         model = Alert
         fields = [
-            'id', 'farm', 'farm_name', 'flock', 'flock_id', 'alert_type',
+            'id', 'flock', 'flock_id', 'alert_type',
             'severity', 'title', 'message', 'is_read', 'is_resolved',
-            'resolved_by', 'resolved_by_name', 'resolved_at', 'created_at'
+            'resolved_by', 'resolved_by_name', 'resolved_at', 'created_by', 'created_at'
         ]
+        read_only_fields = ('id', 'created_at', 'created_by')
         read_only_fields = ('id', 'created_at')
 
 class AlertUpdateSerializer(serializers.ModelSerializer):

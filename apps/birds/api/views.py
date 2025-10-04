@@ -3,7 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q, Sum, Avg
+from django.db.models import Sum, Avg, Q
+from django.utils import timezone
 from apps.birds.models.models import Batch, Breed, Flock, FlockMovement
 from apps.birds.api.serializers import (
     BreedSerializer, FlockSerializer, FlockMovementSerializer, FlockSummarySerializer, BatchSerializer
@@ -11,9 +12,7 @@ from apps.birds.api.serializers import (
 from apps.users.permissions import CanManageFlocks, CanManageBatches
 
 class BatchListCreateView(generics.ListCreateAPIView):
-    """
-    API view for Listing and creating flocks
-    """
+    """API view for listing and creating batches"""
     serializer_class = BatchSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -23,7 +22,7 @@ class BatchListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role == "admin":
+        if getattr(user, 'role', None) == "admin":
             return Batch.objects.all()
         else:
             return Batch.objects.filter(created_by=user).distinct()
@@ -34,7 +33,7 @@ class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role == "admin":
+        if getattr(user, 'role', None) == "admin":
             return Batch.objects.all()
         else:
             return Batch.objects.filter(created_by=user).distinct()
@@ -52,7 +51,7 @@ def batch_statistics_view(request):
     """
     user = request.user
     
-    if user.role == 'admin':
+    if getattr(user, 'role', None) == 'admin':
         batches = Batch.objects.all()
     else:
         batches = Batch.objects.filter(created_by=user).distinct()
@@ -85,7 +84,7 @@ def batch_performance_view(request, batch_id):
     try:
         user = request.user
         
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             batch = Batch.objects.get(id=batch_id)
         else:
             batch = Batch.objects.get(
@@ -99,13 +98,7 @@ def batch_performance_view(request, batch_id):
         
         # Get weight records
         weight_data = []
-        weight_records = batch.weight_records.all()[:10]
-        for record in weight_records:
-            weight_data.append({
-                'date': record.date,
-                'average_weight': record.average_weight,
-                'age_in_days': record.age_in_days
-            })
+        # TODO: Add weight record aggregation once model exists
         
         performance_data = {
             'batch': BatchSerializer(batch).data,
@@ -183,91 +176,67 @@ class BreedDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [CanManageFlocks]
 
 class FlockListCreateView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating flocks
-    """
+    """API view for listing and creating flocks (farm/building removed)."""
     serializer_class = FlockSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['flock_type', 'status', 'farm', 'building', 'breed']
-    search_fields = ['flock_id', 'breed__name', 'farm__name', 'building__name']
+    filterset_fields = ['flock_type', 'status', 'breed', 'location']
+    search_fields = ['flock_id', 'breed__name', 'location']
     ordering_fields = ['flock_id', 'hatch_date', 'current_count', 'created_at']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Flock.objects.all()
-        else:
-            return Flock.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(created_by=user)
-            ).distinct()
+        return Flock.objects.filter(created_by=user).distinct()
 
 class FlockDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API view for retrieving, updating and deleting a flock
-    """
+    """API view for retrieving, updating and deleting a flock"""
     serializer_class = FlockSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return Flock.objects.all()
-        else:
-            return Flock.objects.filter(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(created_by=user)
-            ).distinct()
-    
+        return Flock.objects.filter(created_by=user).distinct()
+
     def get_permissions(self):
         if self.request.method in ['PUT', 'PATCH', 'DELETE']:
             return [CanManageFlocks()]
         return [permissions.IsAuthenticated()]
 
 class FlockMovementListCreateView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating flock movements
-    """
+    """API view for listing and creating flock movements (farm/building removed)."""
     serializer_class = FlockMovementSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['movement_type', 'flock', 'movement_date']
-    search_fields = ['flock__flock_id', 'reason']
+    search_fields = ['flock__flock_id', 'reason', 'from_location', 'to_location']
     ordering_fields = ['movement_date', 'created_at']
     ordering = ['-movement_date']
-    
+
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return FlockMovement.objects.all()
-        else:
-            return FlockMovement.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+        return FlockMovement.objects.filter(
+            Q(recorded_by=user) | Q(flock__created_by=user)
+        ).distinct()
 
 class FlockMovementDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API view for retrieving, updating and deleting a flock movement
-    """
+    """API view for retrieving, updating and deleting a flock movement"""
     serializer_class = FlockMovementSerializer
     permission_classes = [CanManageFlocks]
-    
+
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if getattr(user, 'role', None) in ['admin']:
             return FlockMovement.objects.all()
-        else:
-            return FlockMovement.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+        return FlockMovement.objects.filter(
+            Q(recorded_by=user) | Q(flock__created_by=user)
+        ).distinct()
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -277,14 +246,10 @@ def flock_statistics_view(request):
     """
     user = request.user
     
-    if user.role in ['admin']:
+    if getattr(user, 'role', None) in ['admin']:
         flocks = Flock.objects.all()
     else:
-        flocks = Flock.objects.filter(
-            Q(farm__owner=user) | 
-            Q(farm__managers=user) |
-            Q(created_by=user)
-        ).distinct()
+        flocks = Flock.objects.filter(created_by=user).distinct()
     
     active_flocks = flocks.filter(status='active')
     
@@ -330,45 +295,21 @@ def flock_performance_view(request, flock_id):
     """
     try:
         user = request.user
-        
-        if user.role in ['admin']:
+
+        if getattr(user, 'role', None) in ['admin']:
             flock = Flock.objects.get(id=flock_id)
         else:
-            flock = Flock.objects.get(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(created_by=user),
-                id=flock_id
-            )
-        
-        # Calculate performance metrics
+            flock = Flock.objects.get(created_by=user, id=flock_id)
+
         age_weeks = flock.age_in_days / 7
         survival_rate = (flock.current_count / flock.initial_count * 100) if flock.initial_count > 0 else 0
-        
-        # Get recent movements
-        recent_movements = flock.movements.all()[:10]
-        
-        # Get production data if it's a layer flock
-        production_data = []
-        if flock.flock_type in ['layer', 'breeder']:
-            production_records = flock.egg_productions.all()[:30]
-            for record in production_records:
-                production_data.append({
-                    'date': record.date,
-                    'total_eggs': record.total_eggs,
-                    'production_rate': record.production_rate
-                })
-        
-        # Get weight records
-        weight_data = []
-        weight_records = flock.weight_records.all()[:10]
-        for record in weight_records:
-            weight_data.append({
-                'date': record.date,
-                'average_weight': record.average_weight,
-                'age_in_days': record.age_in_days
-            })
-        
+
+        # Movements (may be empty if no related name yet after reset)
+        recent_movements_qs = FlockMovement.objects.filter(flock=flock).order_by('-movement_date')[:10]
+
+        production_data = []  # placeholder until production models refactored
+        weight_data = []      # placeholder until weight tracking added
+
         performance_data = {
             'flock': FlockSerializer(flock).data,
             'metrics': {
@@ -377,13 +318,11 @@ def flock_performance_view(request, flock_id):
                 'mortality_rate': round(100 - survival_rate, 2),
                 'birds_lost': flock.initial_count - flock.current_count,
             },
-            'recent_movements': FlockMovementSerializer(recent_movements, many=True).data,
+            'recent_movements': FlockMovementSerializer(recent_movements_qs, many=True).data if recent_movements_qs else [],
             'production_data': production_data,
             'weight_data': weight_data
         }
-        
         return Response(performance_data)
-        
     except Flock.DoesNotExist:
         return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)
 
