@@ -91,12 +91,12 @@ def analytics_dashboard_view(request):
     """
     user = request.user
     
-    # Simplified: user-scope only, all active flocks they created (or all if admin)
-    from apps.birds.models.models import Flock
+    # Simplified: user-scope only, all active batches they created (or all if admin)
+    from apps.birds.models.models import Batch
     if getattr(user, 'role', None) in ['admin']:
-        flocks = Flock.objects.filter(status='active')
+        batches = Batch.objects.filter(status='active')
     else:
-        flocks = Flock.objects.filter(created_by=user, status='active')
+        batches = Batch.objects.filter(created_by=user, status='active')
     
     # Time periods for analysis
     today = timezone.now().date()
@@ -106,17 +106,17 @@ def analytics_dashboard_view(request):
     # Farm stats removed in simplified model
     farm_stats = {}
     
-    # Flock statistics
-    total_birds = flocks.aggregate(total=Sum('current_count'))['total'] or 0
-    flock_stats = {
-        'total_flocks': flocks.count(),
+    # Batch statistics
+    total_birds = batches.aggregate(total=Sum('current_count'))['total'] or 0
+    batch_stats = {
+        'total_flocks': batches.count(),
         'total_birds': total_birds,
-        'average_flock_size': flocks.aggregate(avg=Avg('current_count'))['avg'] or 0,
-        'flocks_by_type': flocks.values('flock_type').annotate(
+        'average_batch_size': batches.aggregate(avg=Avg('current_count'))['avg'] or 0,
+        'batches_by_type': batches.values('flock_type').annotate(
             count=Count('id'),
             total_birds=Sum('current_count')
         ).order_by('-total_birds'),
-        'breeds_distribution': flocks.values('breed__name').annotate(
+        'breeds_distribution': batches.values('breed__name').annotate(
             count=Count('id'),
             total_birds=Sum('current_count')
         ).order_by('-total_birds')[:5]
@@ -127,7 +127,7 @@ def analytics_dashboard_view(request):
     
     # Egg production (last 30 days)
     recent_egg_production = EggProduction.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=last_30_days
     )
     
@@ -146,7 +146,7 @@ def analytics_dashboard_view(request):
     
     # Feed consumption analytics
     recent_feed = FeedRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=last_30_days
     )
     
@@ -166,12 +166,12 @@ def analytics_dashboard_view(request):
     from apps.health.models.models import HealthRecord, MortalityRecord
     
     recent_health = HealthRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=last_30_days
     )
     
     recent_mortality = MortalityRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=last_30_days
     )
     
@@ -197,10 +197,10 @@ def analytics_dashboard_view(request):
     # Performance indicators
     performance_indicators = {
         'overall_survival_rate': sum(
-            (flock.current_count / flock.initial_count * 100) if flock.initial_count > 0 else 0
-            for flock in flocks
-        ) / flocks.count() if flocks.count() > 0 else 0,
-        'average_flock_age': flocks.aggregate(avg=Avg('age_in_days'))['avg'] or 0,
+            (batch.current_count / batch.initial_count * 100) if batch.initial_count > 0 else 0
+            for batch in batches
+        ) / batches.count() if batches.count() > 0 else 0,
+        'average_flock_age': batches.aggregate(avg=Avg('age_in_days'))['avg'] or 0,
     'capacity_utilization': 0
     }
     
@@ -213,7 +213,7 @@ def analytics_dashboard_view(request):
     
     dashboard_data = {
         'farm_statistics': farm_stats,
-        'flock_statistics': flock_stats,
+        'batch_statistics': batch_stats,
         'production_analytics': {
             'egg_production': egg_analytics,
             'feed_consumption': feed_analytics
@@ -224,7 +224,7 @@ def analytics_dashboard_view(request):
         'recent_alerts': AlertSerializer(recent_alerts, many=True).data,
         'summary': {
             'total_farms': 0,
-            'total_flocks': flock_stats['total_flocks'],
+            'total_flocks': batch_stats['total_flocks'],
             'total_birds': total_birds,
             'unresolved_alerts': recent_alerts.count()
         }
@@ -242,7 +242,7 @@ def generate_report_view(request):
     # farm removed
     start_date = request.data.get('start_date')
     end_date = request.data.get('end_date')
-    flock_ids = request.data.get('flock_ids', [])
+    batch_ids = request.data.get('batch_ids', [])
     
     if not all([report_type, start_date, end_date]):
         return Response(
@@ -251,18 +251,18 @@ def generate_report_view(request):
         )
     
     try:
-        from apps.birds.models.models import Flock
+        from apps.birds.models.models import Batch
         user = request.user
         
         # Parse dates
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         
-        # Get flocks
-        if flock_ids:
-            flocks = Flock.objects.filter(id__in=flock_ids, created_by=user)
+        # Get batches
+        if batch_ids:
+            batches = Batch.objects.filter(id__in=batch_ids, created_by=user)
         else:
-            flocks = Flock.objects.filter(created_by=user)
+            batches = Batch.objects.filter(created_by=user)
         
         # Generate report data based on type
         report_data = {}
@@ -271,12 +271,12 @@ def generate_report_view(request):
             from apps.production.models.models import EggProduction, FeedRecord
             
             egg_production = EggProduction.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             )
             
             feed_records = FeedRecord.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             )
             
@@ -285,7 +285,7 @@ def generate_report_view(request):
                 'average_production_rate': egg_production.aggregate(avg=Avg('production_rate'))['avg'] or 0,
                 'total_feed_consumed': feed_records.aggregate(total=Sum('quantity_kg'))['total'] or 0,
                 'total_feed_cost': sum(record.quantity_kg * record.cost_per_kg for record in feed_records),
-                'flocks_included': flocks.count(),
+                'batches_included': batches.count(),
                 'date_range': f"{start_date} to {end_date}"
             }
         
@@ -293,12 +293,12 @@ def generate_report_view(request):
             from apps.health.models.models import HealthRecord, MortalityRecord
             
             health_records = HealthRecord.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             )
             
             mortality_records = MortalityRecord.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             )
             
@@ -311,7 +311,7 @@ def generate_report_view(request):
                 'mortality_by_cause': list(mortality_records.values('cause_category').annotate(
                     total=Sum('count')
                 ).order_by('-total')),
-                'flocks_included': flocks.count(),
+                'batch_included': batches.count(),
                 'date_range': f"{start_date} to {end_date}"
             }
         
@@ -320,18 +320,18 @@ def generate_report_view(request):
             from apps.health.models.models import HealthRecord
             
             feed_costs = FeedRecord.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             ).aggregate(
                 total_cost=Sum(F('quantity_kg') * F('cost_per_kg'))
             )['total_cost'] or 0
             
             health_costs = HealthRecord.objects.filter(
-                flock__in=flocks,
+                batch__in=batches,
                 date__range=[start_date, end_date]
             ).aggregate(total=Sum('cost'))['total'] or 0
             
-            total_birds = flocks.aggregate(total=Sum('current_count'))['total'] or 0
+            total_birds = batches.aggregate(total=Sum('current_count'))['total'] or 0
             
             report_data = {
                 'feed_costs': feed_costs,
@@ -339,7 +339,7 @@ def generate_report_view(request):
                 'total_operational_costs': feed_costs + health_costs,
                 'cost_per_bird': (feed_costs + health_costs) / total_birds if total_birds > 0 else 0,
                 'total_birds': total_birds,
-                'flocks_included': flocks.count(),
+                'batches_included': batches.count(),
                 'date_range': f"{start_date} to {end_date}"
             }
         
@@ -354,8 +354,8 @@ def generate_report_view(request):
             generated_by=user
         )
         
-        if flock_ids:
-            report.flocks.set(flocks)
+        if batch_ids:
+            report.batches.set(batches)
         
         return Response({
             'report_id': getattr(report, 'id', None),
@@ -373,7 +373,7 @@ def create_alert_view(request):
     API view for creating system alerts
     """
     # farm removed
-    flock_id = request.data.get('flock_id')
+    batch_id = request.data.get('batch_id')
     alert_type = request.data.get('alert_type')
     severity = request.data.get('severity')
     title = request.data.get('title')
@@ -386,15 +386,15 @@ def create_alert_view(request):
         )
     
     try:
-        from apps.birds.models.models import Flock
+        from apps.birds.models.models import Batch
         user = request.user
         
-        flock = None
-        if flock_id:
-            flock = Flock.objects.get(id=flock_id, created_by=user)
+        batch = None
+        if batch_id:
+            batch = Batch.objects.get(id=batch_id, created_by=user)
         
         alert = Alert.objects.create(
-            flock=flock,
+            batch=batch,
             alert_type=alert_type,
             severity=severity,
             title=title,
@@ -407,8 +407,8 @@ def create_alert_view(request):
             'message': 'Alert created successfully'
         })
         
-    except Flock.DoesNotExist:
-        return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Batch.DoesNotExist:
+        return Response({'error': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
