@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.birds.models.models import Flock
+from apps.birds.models.models import Batch
 
 User = get_user_model()
 
@@ -29,7 +29,7 @@ class Report(models.Model):
     report_format = models.CharField(max_length=10, choices=REPORT_FORMATS)
     start_date = models.DateField()
     end_date = models.DateField()
-    flocks = models.ManyToManyField(Flock, blank=True)
+    batches = models.ManyToManyField(Batch, blank=True)
     file_path = models.FileField(upload_to='reports/', null=True, blank=True)
     parameters = models.JSONField(default=dict, blank=True)
     generated_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_reports')
@@ -66,7 +66,7 @@ class Alert(models.Model):
     ]
     
     # Removed farm foreign key; optional flock reference retained
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='alerts', null=True, blank=True)
+    flock = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='alerts', null=True, blank=True)
     alert_type = models.CharField(max_length=20, choices=ALERT_TYPES)
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS)
     title = models.CharField(max_length=200)
