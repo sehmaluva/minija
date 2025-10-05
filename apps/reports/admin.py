@@ -5,15 +5,15 @@ from apps.reports.models.models import Report, Alert
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('title', 'report_type', 'report_format', 'start_date', 'end_date', 'generated_by', 'generated_at')
     list_filter = ('report_type', 'report_format', 'generated_at')
-    search_fields = ('title', 'farm__name', 'generated_by__email')
+    search_fields = ('title', 'generated_by__email')
     readonly_fields = ('generated_at',)
-    filter_horizontal = ('flocks',)
+    filter_horizontal = ('batch',)
 
 @admin.register(Alert)
 class AlertAdmin(admin.ModelAdmin):
-    list_display = ('title', 'flock', 'alert_type', 'severity', 'is_read', 'is_resolved', 'created_at')
+    list_display = ('title', 'batch', 'alert_type', 'severity', 'is_read', 'is_resolved', 'created_at')
     list_filter = ('alert_type', 'severity', 'is_read', 'is_resolved', 'created_at')
-    search_fields = ('title', 'message', 'farm__name', 'flock__flock_id')
+    search_fields = ('title', 'message', 'batch__batch_id')
     readonly_fields = ('created_at', 'resolved_at')
     
     actions = ['mark_as_read', 'mark_as_resolved']
