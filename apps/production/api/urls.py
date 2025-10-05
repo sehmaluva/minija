@@ -7,5 +7,5 @@ urlpatterns = [
     path('weights/', views.WeightRecordListCreateView.as_view(), name='weight_record_list_create'),
     path('environmental/', views.EnvironmentalRecordListCreateView.as_view(), name='environmental_record_list_create'),
     path('dashboard/', views.production_dashboard_view, name='production_dashboard'),
-    path('flock/<int:flock_id>/analysis/', views.flock_production_analysis_view, name='flock_production_analysis'),
+    path('batch/<int:batch_id>/analysis/', views.batch_production_analysis_view, name='batch_production_analysis'),
 ]
