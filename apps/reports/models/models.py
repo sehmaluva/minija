@@ -65,8 +65,8 @@ class Alert(models.Model):
         ('critical', 'Critical'),
     ]
     
-    # Removed farm foreign key; optional flock reference retained
-    flock = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='alerts', null=True, blank=True)
+    # Removed farm foreign key; optional batch reference retained
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='alerts', null=True, blank=True)
     alert_type = models.CharField(max_length=20, choices=ALERT_TYPES)
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS)
     title = models.CharField(max_length=200)
