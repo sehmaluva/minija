@@ -19,8 +19,8 @@ class FeedRecordListCreateView(generics.ListCreateAPIView):
     serializer_class = FeedRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['feed_type', 'flock', 'date', 'brand']
-    search_fields = ['brand', 'supplier', 'flock__flock_id']
+    filterset_fields = ['feed_type', 'batch', 'date', 'brand']
+    search_fields = ['brand', 'supplier', 'batch__batch_id']
     ordering_fields = ['date', 'quantity_kg', 'cost_per_kg']
     ordering = ['-date']
     
@@ -29,11 +29,7 @@ class FeedRecordListCreateView(generics.ListCreateAPIView):
         if user.role in ['admin']:
             return FeedRecord.objects.all()
         else:
-            return FeedRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return FeedRecord.objects.filter(recorded_by=user).distinct()
 
 class EggProductionListCreateView(generics.ListCreateAPIView):
     """
@@ -42,8 +38,8 @@ class EggProductionListCreateView(generics.ListCreateAPIView):
     serializer_class = EggProductionSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['flock', 'date']
-    search_fields = ['flock__flock_id']
+    filterset_fields = ['batch', 'date']
+    search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'total_eggs', 'production_rate']
     ordering = ['-date']
     
@@ -52,11 +48,7 @@ class EggProductionListCreateView(generics.ListCreateAPIView):
         if user.role in ['admin']:
             return EggProduction.objects.all()
         else:
-            return EggProduction.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return EggProduction.objects.filter(recorded_by=user).distinct()
 
 class WeightRecordListCreateView(generics.ListCreateAPIView):
     """
@@ -65,8 +57,8 @@ class WeightRecordListCreateView(generics.ListCreateAPIView):
     serializer_class = WeightRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['flock', 'date']
-    search_fields = ['flock__flock_id']
+    filterset_fields = ['batch', 'date']
+    search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'average_weight', 'age_in_days']
     ordering = ['-date']
     
@@ -75,11 +67,7 @@ class WeightRecordListCreateView(generics.ListCreateAPIView):
         if user.role in ['admin']:
             return WeightRecord.objects.all()
         else:
-            return WeightRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return WeightRecord.objects.filter(recorded_by=user).distinct()
 
 class EnvironmentalRecordListCreateView(generics.ListCreateAPIView):
     """
@@ -88,8 +76,8 @@ class EnvironmentalRecordListCreateView(generics.ListCreateAPIView):
     serializer_class = EnvironmentalRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['flock', 'date']
-    search_fields = ['flock__flock_id']
+    filterset_fields = ['batch', 'date']
+    search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'temperature', 'humidity']
     ordering = ['-date']
     
@@ -98,11 +86,7 @@ class EnvironmentalRecordListCreateView(generics.ListCreateAPIView):
         if user.role in ['admin']:
             return EnvironmentalRecord.objects.all()
         else:
-            return EnvironmentalRecord.objects.filter(
-                Q(flock__farm__owner=user) | 
-                Q(flock__farm__managers=user) |
-                Q(recorded_by=user)
-            ).distinct()
+            return EnvironmentalRecord.objects.filter(recorded_by=user).distinct()
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -114,21 +98,16 @@ def production_dashboard_view(request):
     
     # Get user's accessible flocks
     if user.role in ['admin']:
-        from apps.birds.models.models import Flock
-        flocks = Flock.objects.filter(status='active')
+        from apps.birds.models.models import Batch
+        batches = Batch.objects.filter(status='active')
     else:
-        from apps.birds.models.models import Flock
-        flocks = Flock.objects.filter(
-            Q(farm__owner=user) | 
-            Q(farm__managers=user) |
-            Q(created_by=user),
-            status='active'
-        ).distinct()
+        from apps.birds.models.models import Batch
+        batches = Batch.objects.filter(created_by=user,status='active').distinct()
     
     # Feed consumption (last 30 days)
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
     recent_feed = FeedRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=thirty_days_ago
     )
     
@@ -141,28 +120,28 @@ def production_dashboard_view(request):
         ).order_by('-total_kg')
     }
     
-    # Egg production (last 30 days) - only for layer flocks
-    layer_flocks = flocks.filter(flock_type__in=['layer', 'breeder'])
-    recent_eggs = EggProduction.objects.filter(
-        flock__in=layer_flocks,
-        date__gte=thirty_days_ago
-    )
+    # #Egg production (last 30 days) - only for layer batches
+    # layer_flocks = batches.filter(flock_type__in=['layer', 'breeder'])
+    # recent_eggs = EggProduction.objects.filter(
+    #     batch__in=layer_flocks,
+    #     date__gte=thirty_days_ago
+    # )
     
-    egg_stats = {
-        'total_eggs': recent_eggs.aggregate(total=Sum('total_eggs'))['total'] or 0,
-        'average_production_rate': recent_eggs.aggregate(avg=Avg('production_rate'))['avg'] or 0,
-        'grade_distribution': {
-            'grade_a': recent_eggs.aggregate(total=Sum('grade_a_eggs'))['total'] or 0,
-            'grade_b': recent_eggs.aggregate(total=Sum('grade_b_eggs'))['total'] or 0,
-            'grade_c': recent_eggs.aggregate(total=Sum('grade_c_eggs'))['total'] or 0,
-            'cracked': recent_eggs.aggregate(total=Sum('cracked_eggs'))['total'] or 0,
-            'dirty': recent_eggs.aggregate(total=Sum('dirty_eggs'))['total'] or 0,
-        }
-    }
+    # egg_stats = {
+    #     'total_eggs': recent_eggs.aggregate(total=Sum('total_eggs'))['total'] or 0,
+    #     'average_production_rate': recent_eggs.aggregate(avg=Avg('production_rate'))['avg'] or 0,
+    #     'grade_distribution': {
+    #         'grade_a': recent_eggs.aggregate(total=Sum('grade_a_eggs'))['total'] or 0,
+    #         'grade_b': recent_eggs.aggregate(total=Sum('grade_b_eggs'))['total'] or 0,
+    #         'grade_c': recent_eggs.aggregate(total=Sum('grade_c_eggs'))['total'] or 0,
+    #         'cracked': recent_eggs.aggregate(total=Sum('cracked_eggs'))['total'] or 0,
+    #         'dirty': recent_eggs.aggregate(total=Sum('dirty_eggs'))['total'] or 0,
+    #     }
+    # }
     
     # Weight tracking
     recent_weights = WeightRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=thirty_days_ago
     )
     
@@ -174,7 +153,7 @@ def production_dashboard_view(request):
     
     # Environmental conditions
     recent_environmental = EnvironmentalRecord.objects.filter(
-        flock__in=flocks,
+        batch__in=batches,
         date__gte=thirty_days_ago
     )
     
@@ -186,13 +165,13 @@ def production_dashboard_view(request):
     
     dashboard_data = {
         'feed_consumption': feed_stats,
-        'egg_production': egg_stats,
+        # 'egg_production': egg_stats,
         'weight_tracking': weight_stats,
         'environmental_conditions': environmental_stats,
         'summary': {
-            'active_flocks': flocks.count(),
-            'layer_flocks': layer_flocks.count(),
-            'total_birds': flocks.aggregate(total=Sum('current_count'))['total'] or 0
+            'active_flocks': batches.count(),
+            # 'layer_flocks': layer_flocks.count(),
+            'total_birds': batches.aggregate(total=Sum('current_count'))['total'] or 0
         }
     }
     
@@ -200,52 +179,47 @@ def production_dashboard_view(request):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def flock_production_analysis_view(request, flock_id):
+def batch_production_analysis_view(request, batch_number):
     """
-    API view for detailed production analysis of a specific flock
+    API view for detailed production analysis of a specific batch
     """
     try:
         user = request.user
         
         if user.role in ['admin']:
-            from apps.birds.models.models import Flock
-            flock = Flock.objects.get(id=flock_id)
+            from apps.birds.models.models import Batch
+            batch = Batch.objects.get(id=batch_number)
         else:
-            from apps.birds.models.models import Flock
-            flock = Flock.objects.get(
-                Q(farm__owner=user) | 
-                Q(farm__managers=user) |
-                Q(created_by=user),
-                id=flock_id
-            )
+            from apps.birds.models.models import Batch
+            batch = Batch.objects.get(created_by=user, id=batch_id)
         
         # Feed consumption analysis
-        feed_records = flock.feed_records.all().order_by('date')
+        feed_records = batch.feed_records.all().order_by('date')
         total_feed_consumed = feed_records.aggregate(total=Sum('quantity_kg'))['total'] or 0
         total_feed_cost = sum(record.total_cost for record in feed_records)
         
-        # Egg production analysis (if applicable)
-        egg_data = {}
-        if flock.flock_type in ['layer', 'breeder']:
-            egg_records = flock.egg_productions.all().order_by('date')
-            total_eggs = egg_records.aggregate(total=Sum('total_eggs'))['total'] or 0
-            avg_production_rate = egg_records.aggregate(avg=Avg('production_rate'))['avg'] or 0
+        # # Egg production analysis (if applicable)
+        # egg_data = {}
+        # if batch.flock_type in ['layer', 'breeder']:
+        #     egg_records = batch.egg_productions.all().order_by('date')
+        #     total_eggs = egg_records.aggregate(total=Sum('total_eggs'))['total'] or 0
+        #     avg_production_rate = egg_records.aggregate(avg=Avg('production_rate'))['avg'] or 0
             
-            egg_data = {
-                'total_eggs_produced': total_eggs,
-                'average_production_rate': avg_production_rate,
-                'production_trend': [
-                    {
-                        'date': record.date,
-                        'total_eggs': record.total_eggs,
-                        'production_rate': record.production_rate
-                    }
-                    for record in egg_records[-30:]  # Last 30 records
-                ]
-            }
+        #     egg_data = {
+        #         'total_eggs_produced': total_eggs,
+        #         'average_production_rate': avg_production_rate,
+        #         'production_trend': [
+        #             {
+        #                 'date': record.date,
+        #                 'total_eggs': record.total_eggs,
+        #                 'production_rate': record.production_rate
+        #             }
+        #             for record in egg_records[-30:]  # Last 30 records
+        #         ]
+        #     }
         
         # Weight tracking analysis
-        weight_records = flock.weight_records.all().order_by('date')
+        weight_records = batch.weight_records.all().order_by('date')
         weight_trend = [
             {
                 'date': record.date,
@@ -262,33 +236,31 @@ def flock_production_analysis_view(request, flock_id):
             if latest_weight:
                 weight_gain = latest_weight.average_weight - (weight_records.first().average_weight if weight_records.first() else 0)
                 if weight_gain > 0:
-                    fcr = total_feed_consumed / (weight_gain * flock.current_count / 1000)  # Convert to kg
+                    fcr = total_feed_consumed / (weight_gain * batch.current_count / 1000)  # Convert to kg
         
         analysis_data = {
-            'flock_info': {
-                'id': flock.id,
-                'flock_id': flock.flock_id,
-                'breed': flock.breed.name,
-                'flock_type': flock.flock_type,
-                'current_count': flock.current_count,
-                'age_in_days': flock.age_in_days
+            'batch_info': {
+                'id': batch.id,
+                'batch_id': batch.batch_number,
+                'current_count': batch.current_count,
+                'age_in_days': batch.age_in_days
             },
             'feed_analysis': {
                 'total_consumed_kg': total_feed_consumed,
                 'total_cost': total_feed_cost,
-                'feed_per_bird': total_feed_consumed / flock.current_count if flock.current_count > 0 else 0,
-                'cost_per_bird': total_feed_cost / flock.current_count if flock.current_count > 0 else 0,
+                'feed_per_bird': total_feed_consumed / batch.current_count if batch.current_count > 0 else 0,
+                'cost_per_bird': total_feed_cost / batch.current_count if batch.current_count > 0 else 0,
                 'feed_conversion_ratio': fcr
             },
-            'egg_production': egg_data,
+            # 'egg_production': egg_data,
             'weight_tracking': {
                 'records_count': weight_records.count(),
                 'weight_trend': weight_trend,
                 'current_average_weight': weight_records.last().average_weight if weight_records.exists() else None
             },
             'performance_indicators': {
-                'survival_rate': (flock.current_count / flock.initial_count * 100) if flock.initial_count > 0 else 0,
-                'days_in_production': flock.age_in_days,
+                'survival_rate': (batch.current_count / batch.initial_count * 100) if batch.initial_count > 0 else 0,
+                'days_in_production': batch.age_in_days,
                 'feed_efficiency': fcr
             }
         }
@@ -296,5 +268,5 @@ def flock_production_analysis_view(request, flock_id):
         return Response(analysis_data)
         
     except:
-        from apps.birds.models.models import Flock
-        return Response({'error': 'Flock not found'}, status=status.HTTP_404_NOT_FOUND)
+        from apps.birds.models.models import Batch
+        return Response({'error': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)

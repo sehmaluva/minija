@@ -74,7 +74,7 @@ class EggProduction(models.Model):
         unique_together = ['batch', 'date']
     
     def __str__(self):
-        return f"{self.batch.batch_id} - {self.date} - {self.total_eggs} eggs"
+        return f"{self.batch.batch_number} - {self.date} - {self.total_eggs} eggs"
     
     @property
     def production_rate(self):
