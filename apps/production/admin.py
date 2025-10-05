@@ -11,9 +11,9 @@ class FeedRecordAdmin(admin.ModelAdmin):
 
 @admin.register(EggProduction)
 class EggProductionAdmin(admin.ModelAdmin):
-    list_display = ('flock', 'date', 'total_eggs', 'production_rate', 'average_weight', 'recorded_by')
+    list_display = ('batch', 'date', 'total_eggs', 'production_rate', 'average_weight', 'recorded_by')
     list_filter = ('date', 'flock__flock_type')
-    search_fields = ('flock__flock_id',)
+    search_fields = ('batch__batch_id',)
     readonly_fields = ('production_rate', 'created_at')
 
 @admin.register(WeightRecord)
