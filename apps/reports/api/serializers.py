@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.reports.models.models import Report, Alert
-from apps.birds.api.serializers import FlockSerializer
+from apps.birds.api.serializers import Batch
 from apps.users.api.serializers import UserSerializer
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -8,19 +8,19 @@ class ReportSerializer(serializers.ModelSerializer):
     Serializer for Report model
     """
     generated_by_name = serializers.CharField(source='generated_by.full_name', read_only=True)
-    flocks_count = serializers.SerializerMethodField()
+    batch_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Report
         fields = [
             'id', 'title', 'report_type', 'report_format',
-            'start_date', 'end_date', 'flocks', 'flocks_count', 'file_path',
+            'start_date', 'end_date', 'batches', 'batch_count', 'file_path',
             'parameters', 'generated_by', 'generated_by_name', 'generated_at'
         ]
         read_only_fields = ('id', 'generated_by', 'generated_at')
     
-    def get_flocks_count(self, obj):
-        return obj.flocks.count()
+    def get_batch_count(self, obj):
+        return obj.batches.count()
     
     def create(self, validated_data):
         validated_data['generated_by'] = self.context['request'].user
@@ -30,7 +30,7 @@ class ReportCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating reports with validation
     """
-    flock_ids = serializers.ListField(
+    batch_ids = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
         required=False
@@ -40,7 +40,7 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         model = Report
         fields = [
             'title', 'report_type', 'report_format',
-            'start_date', 'end_date', 'flock_ids', 'parameters'
+            'start_date', 'end_date', 'batch_ids', 'parameters'
         ]
     
     def validate(self, attrs):
@@ -53,15 +53,15 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        flock_ids = validated_data.pop('flock_ids', [])
+        batches_ids = validated_data.pop('batches_ids', [])
         validated_data['generated_by'] = self.context['request'].user
 
         report = Report.objects.create(**validated_data)
 
-        if flock_ids:
-            from apps.birds.models.models import Flock
-            flocks = Flock.objects.filter(id__in=flock_ids)
-            report.flocks.set(flocks)
+        if batches_ids:
+            from apps.birds.models.models import Batch
+            batches = Batch.objects.filter(id__in=batches_ids)
+            report.batches.set(batches)
 
         return report
 
@@ -69,13 +69,13 @@ class AlertSerializer(serializers.ModelSerializer):
     """
     Serializer for Alert model
     """
-    flock_id = serializers.CharField(source='flock.flock_id', read_only=True)
+    batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     resolved_by_name = serializers.CharField(source='resolved_by.full_name', read_only=True)
     
     class Meta:
         model = Alert
         fields = [
-            'id', 'flock', 'flock_id', 'alert_type',
+            'id', 'batch', 'batch_id', 'alert_type',
             'severity', 'title', 'message', 'is_read', 'is_resolved',
             'resolved_by', 'resolved_by_name', 'resolved_at', 'created_by', 'created_at'
         ]
