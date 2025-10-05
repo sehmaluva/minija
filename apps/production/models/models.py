@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from apps.birds.models.models import Flock, Batch
+from apps.birds.models.models import Batch
 from decimal import Decimal
 
 User = get_user_model()
@@ -54,7 +54,7 @@ class EggProduction(models.Model):
         ('dirty', 'Dirty'),
     ]
     
-    flock = models.ForeignKey(Flock, on_delete=models.CASCADE, related_name='egg_productions')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='egg_productions')
     date = models.DateField()
     total_eggs = models.PositiveIntegerField()
     grade_a_eggs = models.PositiveIntegerField(default=0)
@@ -71,16 +71,16 @@ class EggProduction(models.Model):
         verbose_name = 'Egg Production'
         verbose_name_plural = 'Egg Productions'
         ordering = ['-date']
-        unique_together = ['flock', 'date']
+        unique_together = ['batch', 'date']
     
     def __str__(self):
-        return f"{self.flock.flock_id} - {self.date} - {self.total_eggs} eggs"
+        return f"{self.batch.batch_id} - {self.date} - {self.total_eggs} eggs"
     
     @property
     def production_rate(self):
-        if self.flock.current_count == 0:
+        if self.batch.current_count == 0:
             return 0
-        return (self.total_eggs / self.flock.current_count) * 100
+        return (self.total_eggs / self.batch.current_count) * 100
 
 class WeightRecord(models.Model):
     """
