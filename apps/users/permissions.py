@@ -16,14 +16,6 @@ class IsAdminOrOwner(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.role in ['admin', 'user']
 
-class CanManageFlocks(permissions.BasePermission):
-    """
-    Custom permission for flock management.
-    """
-    
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['user', 'admin']
-
 class CanManageBatches(permissions.BasePermission):
     """
     Custom permission for Batches management.
