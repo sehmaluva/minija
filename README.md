@@ -4,12 +4,11 @@
 
 ### Core Functionality
 
-- **User Management**: Role-based authentication (Admin, Manager, Worker, Owner)
--- **Accounting Management**: Keep track of sales and costs.
-- **Farm Management**: Multi-farm support with buildings and capacity tracking.
-- **Flock Management**: Complete flock lifecycle management with breed tracking.
+- **User Management**: Role-based authentication (Admin, User)
+- **Accounting Management**: Keep track of sales and costs.
+- **Batch Management**: Complete batch lifecycle management.
 - **Health Tracking**: Vaccination schedules, medication records, mortality tracking.
-- **Production Monitoring**: Feed consumption, egg production, weight tracking, environmental conditions.
+- **Production Monitoring**: Feed consumption, weight tracking, environmental conditions.
 - **Reporting & Analytics**: Comprehensive dashboards and custom report generation.
 - **Alert System**: Automated alerts for health issues, production anomalies.
 
@@ -70,4 +69,4 @@ python manage.py check
 
 ## Contributing
 
-Feel free to open an issue or create a PR. Keep changes small and add/update tests when appropriate.
+Feel free to open an issue or create a PR.
