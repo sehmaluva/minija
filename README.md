@@ -1,71 +1,11 @@
-# Poultry Management System
+# Minija - Poultry Management System
 
-## Features
+*Empowering broiler farmers with intelligent, data-driven solutions for sustainable and profitable operations.*
 
-### Core Functionality
+## What is Minija?
 
-- **Accounting Management**: Keep track of sales and costs.
-- **Batch Management**: Complete batch lifecycle management.
-- **Health Tracking**: Vaccination schedules, medication records, mortality tracking.
-- **Production Monitoring**: Feed consumption, weight tracking, environmental conditions.
-- **Reporting & Analytics**: Comprehensive dashboards and custom report generation.
-- **Alert System**: Automated alerts for health issues, production anomalies.
+Minija transforms the way broiler farmers operate by bringing modern technology to traditional farming practices. Our comprehensive platform seamlessly integrates accounting, health monitoring, production tracking, and intelligent analytics into one powerful ecosystem.
 
-#### How to start the app
+**From flock to profit** - Minija helps farmers make informed decisions, reduce costs, prevent losses, and maximize productivity through real-time insights and automated workflows.
 
-1. Backend: create & activate virtualenv
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-1. Backend: configure env
-
-```bash
-touch .env
-# edit .env with your database credentials and SECRET_KEY 
-```
-
-1. Backend: run migrations and create superuser
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-```
-
-1. Frontend: install and run
-
-```bash
-cd frontend/
-pnpm install
-pnpm dev
-# open http://localhost:3000
-```
-
-1. Backend: run server
-
-```bash
-python manage.py runserver
-# open http://localhost:8000
-```
-
-## Common developer tasks
-
-- Typecheck frontend (from `frontend/`):
-
-```bash
-pnpm exec tsc --noEmit
-```
-
-- Run Django checks:
-
-```bash
-python manage.py check
-```
-
-## Contributing
-
-Feel free to open an issue or create a PR.
+Whether you're managing a small broiler project or a large commercial operation, Minija scales with your needs and grows with your success.
