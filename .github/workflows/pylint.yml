@@ -23,4 +23,15 @@ jobs:
 
     - name: Run Pylint and enforce score threshold
       run: |
-        pylint $(git ls-files '*.py') --fail-under=8.0
+        set -euo pipefail
+        # Gather Python files tracked by git, excluding any inside migrations/ directories
+        FILES=$(git ls-files '*.py' | grep -v '/migrations/' || true)
+        if [ -z "${FILES}" ]; then
+          echo "No Python files to lint (all files excluded or none tracked)."
+          exit 0
+        fi
+        echo "Running pylint on the following files:"
+        echo "${FILES}"
+
+        # Run pylint and enforce a minimum overall score of 8.0. pylint exits non-zero if below threshold.
+        pylint ${FILES} --fail-under=8.0
