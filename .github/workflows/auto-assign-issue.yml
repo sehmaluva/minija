@@ -1,0 +1,53 @@
+name: Auto-assign and label issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-and-label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Assign issue and add labels
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Fallback auto-assign and labeling for newly opened issues
+            const ASSIGNEE = 'sehmaluva'; // change this to your GitHub username if different
+            const FALLBACK_LABELS = ['triage'];
+
+            const issueNumber = context.payload.issue.number;
+
+            // Try to add assignee
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                assignees: [ASSIGNEE],
+              });
+              console.log(`Assigned issue #${issueNumber} to ${ASSIGNEE}`);
+            } catch (err) {
+              console.log('Assign failed (maybe user cannot be assigned):', err.message);
+            }
+
+            // If the issue has no labels yet, add a fallback label
+            const existingLabels = (context.payload.issue.labels || []).map(l => (typeof l === 'string' ? l : l.name));
+            if (existingLabels.length === 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: FALLBACK_LABELS,
+                });
+                console.log(`Added fallback labels to issue #${issueNumber}`);
+              } catch (err) {
+                console.log('Adding labels failed:', err.message);
+              }
+            } else {
+              console.log('Issue already has labels:', existingLabels.join(', '));
+            }
