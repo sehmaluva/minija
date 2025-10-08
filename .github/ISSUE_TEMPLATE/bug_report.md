@@ -3,8 +3,7 @@ name: Bug report
 about: Report a reproducible bug
 title: 'Bug: '
 labels: bug
-assignees: sehmaluva
-project: minija
+project: minija development
 
 ---
 
@@ -13,6 +12,7 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '...'
 3. See error
