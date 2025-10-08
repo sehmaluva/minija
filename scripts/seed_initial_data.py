@@ -6,7 +6,6 @@ Run this after creating the database tables
 import os
 import sys
 import django
-from datetime import date, datetime, timedelta
 from django.contrib.auth import get_user_model
 
 # Add the project root to the Python path
@@ -21,6 +20,7 @@ User = get_user_model()
 
 
 def create_initial_data():
+    """Create initial data for the poultry management system."""
     print("Creating initial data for poultry management system...")
 
     # Create admin user
