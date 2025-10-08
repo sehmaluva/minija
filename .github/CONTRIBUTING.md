@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Minija!
 
-We welcome issues, PRs, and suggestions. To keep things simple:
+I welcome issues, PRs, and suggestions. To keep things simple:
 
 - Open an issue using the provided templates (Bug report or Feature request).
 - Use clear, reproducible steps for bugs and a short summary for features.
