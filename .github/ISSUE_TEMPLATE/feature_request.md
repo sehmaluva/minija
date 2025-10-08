@@ -1,9 +1,10 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: "Feature: "
-labels: enhancement, triage, "priority:medium"
+title: 'Feature: '
+labels: enhancement
 assignees: sehmaluva
+
 ---
 
 **Describe the solution you'd like**

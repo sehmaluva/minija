@@ -1,9 +1,10 @@
 ---
 name: Bug report
 about: Report a reproducible bug
-title: "Bug: "
-labels: bug, triage, "priority:medium"
+title: 'Bug: '
+labels: bug
 assignees: sehmaluva
+
 ---
 
 **Describe the bug**
