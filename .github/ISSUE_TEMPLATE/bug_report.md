@@ -4,6 +4,7 @@ about: Report a reproducible bug
 title: 'Bug: '
 labels: bug
 assignees: sehmaluva
+project: minija
 
 ---
 
