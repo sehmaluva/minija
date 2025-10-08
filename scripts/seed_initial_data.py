@@ -7,6 +7,7 @@ import os
 import sys
 import django
 from datetime import date, datetime, timedelta
+from django.contrib.auth import get_user_model
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,12 +16,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
-from django.contrib.auth import get_user_model
-
-# from apps.users.models.models import User
-from apps.birds.models.models import Breed, Flock
-from apps.health.models.models import HealthRecord, Vaccination
-from apps.production.models.models import FeedRecord, EggProduction
 
 User = get_user_model()
 

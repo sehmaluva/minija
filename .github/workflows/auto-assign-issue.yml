@@ -18,6 +18,7 @@ jobs:
             // Fallback auto-assign and labeling for newly opened issues
             const ASSIGNEE = 'sehmaluva'; // change this to your GitHub username if different
             const FALLBACK_LABELS = ['triage'];
+            const FALLBACK_PRIORITY = 'priority:medium';
 
             const issueNumber = context.payload.issue.number;
 
@@ -50,4 +51,22 @@ jobs:
               }
             } else {
               console.log('Issue already has labels:', existingLabels.join(', '));
+            }
+
+            // If no priority label exists (labels that start with "priority:"), add a default priority
+            const hasPriority = existingLabels.some(l => typeof l === 'string' && l.startsWith('priority:'));
+            if (!hasPriority) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: [FALLBACK_PRIORITY],
+                });
+                console.log(`Added default priority (${FALLBACK_PRIORITY}) to issue #${issueNumber}`);
+              } catch (err) {
+                console.log('Adding priority label failed:', err.message);
+              }
+            } else {
+              console.log('Issue already has a priority label');
             }

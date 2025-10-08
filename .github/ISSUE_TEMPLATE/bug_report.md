@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a reproducible bug
 title: "Bug: "
-labels: bug, triage
+labels: bug, triage, "priority:medium"
 assignees: sehmaluva
 ---
 

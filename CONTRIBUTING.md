@@ -8,6 +8,8 @@ We welcome issues, PRs, and suggestions. To keep things simple:
 - Use clear, reproducible steps for bugs and a short summary for features.
 - New issues created via templates will be auto-assigned and labeled.
 
+Priorities: Use `priority:high`, `priority:medium`, or `priority:low` labels when filing issues (templates default to `priority:medium`).
+
 For code contributions, please open a pull request describing the change.
 
 If you aren't sure where to start, open an issue and tag it as `triage`.
