@@ -6,16 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('production', '0002_alter_eggproduction_unique_together_and_more'),
-        ('birds', '0002_remove_flock_breed_remove_flock_created_by_and_more'),
-        ('reports', '0002_remove_alert_flock_remove_report_flocks_alert_batch_and_more'),
+        ("production", "0002_alter_eggproduction_unique_together_and_more"),
+        ("birds", "0002_remove_flock_breed_remove_flock_created_by_and_more"),
+        (
+            "reports",
+            "0002_remove_alert_flock_remove_report_flocks_alert_batch_and_more",
+        ),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Flock',
+            name="Flock",
         ),
         migrations.DeleteModel(
-            name='FlockMovement',
+            name="FlockMovement",
         ),
     ]

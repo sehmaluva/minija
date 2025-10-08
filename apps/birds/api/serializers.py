@@ -2,15 +2,19 @@ from rest_framework import serializers
 from apps.birds.models.models import Batch
 from apps.users.api.serializers import UserSerializer
 
+
 class BatchSerializer(serializers.ModelSerializer):
-    created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
+    created_by_name = serializers.CharField(
+        source="created_by.full_name", read_only=True
+    )
     age_in_days = serializers.ReadOnlyField()
     mortality_rate = serializers.ReadOnlyField()
     age_in_weeks = serializers.SerializerMethodField()
     survival_rate = serializers.SerializerMethodField()
+
     class Meta:
         model = Batch
-        exclude = ['id']
+        exclude = ["id"]
 
     def get_age_in_weeks(self, obj):
         return round(obj.age_in_days / 7, 1)
@@ -22,15 +26,17 @@ class BatchSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Validate that current_count doesn't exceed initial_count
-        current_count = attrs.get('current_count')
-        initial_count = attrs.get('initial_count')
+        current_count = attrs.get("current_count")
+        initial_count = attrs.get("initial_count")
 
         if self.instance:
             current_count = current_count or self.instance.current_count
             initial_count = initial_count or self.instance.initial_count
 
         if current_count and initial_count and current_count > initial_count:
-            raise serializers.ValidationError("Current count cannot exceed initial count")
+            raise serializers.ValidationError(
+                "Current count cannot exceed initial count"
+            )
 
         # # Validate building capacity
         # building = attrs.get('building')
@@ -47,16 +53,22 @@ class BatchSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
+        validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)
+
 
 class BatchSummarySerializer(serializers.ModelSerializer):
     age_in_weeks = serializers.SerializerMethodField()
     survival_rate = serializers.SerializerMethodField()
+
     class Meta:
         model = Batch
         fields = [
-            'id', 'batch_number', 'current_count', 'age_in_weeks', 'survival_rate'
+            "id",
+            "batch_number",
+            "current_count",
+            "age_in_weeks",
+            "survival_rate",
         ]
 
     def get_age_in_weeks(self, obj):

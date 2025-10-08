@@ -8,85 +8,96 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.health.models.models import HealthRecord, MortalityRecord
 from .serializers import (
-    HealthRecordSerializer, HealthRecordCreateSerializer, MortalityRecordSerializer
+    HealthRecordSerializer,
+    HealthRecordCreateSerializer,
+    MortalityRecordSerializer,
 )
 from apps.users.permissions import IsAdminOrOwner
+
 
 class HealthRecordListCreateView(generics.ListCreateAPIView):
     """
     API view for listing and creating health records
     """
+
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['record_type', 'batch', 'date', 'user']
-    search_fields = ['description', 'batch__batch_number']
-    ordering_fields = ['date', 'created_at']
-    ordering = ['-date']
+    filterset_fields = ["record_type", "batch", "date", "user"]
+    search_fields = ["description", "batch__batch_number"]
+    ordering_fields = ["date", "created_at"]
+    ordering = ["-date"]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return HealthRecordCreateSerializer
         return HealthRecordSerializer
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if user.role in ["admin"]:
             return HealthRecord.objects.all()
         else:
             return HealthRecord.objects.filter(created_by=user).distinct()
+
 
 class HealthRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating and deleting a health record
     """
+
     serializer_class = HealthRecordSerializer
     permission_classes = [IsAdminOrOwner]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if user.role in ["admin"]:
             return HealthRecord.objects.all()
-        elif user.role in ['veterinarian']:
+        elif user.role in ["veterinarian"]:
             return HealthRecord.objects.filter(
                 Q(veterinarian=user) | Q(created_by=user)
             )
         else:
             return HealthRecord.objects.filter(created_by=user).distinct()
 
+
 class MortalityRecordListCreateView(generics.ListCreateAPIView):
     """
     API view for listing and creating mortality records
     """
+
     serializer_class = MortalityRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['cause_category', 'batch', 'date']
-    search_fields = ['specific_cause', 'flock__flock_id']
-    ordering_fields = ['date', 'count', 'created_at']
-    ordering = ['-date']
+    filterset_fields = ["cause_category", "batch", "date"]
+    search_fields = ["specific_cause", "flock__flock_id"]
+    ordering_fields = ["date", "count", "created_at"]
+    ordering = ["-date"]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if user.role in ["admin"]:
             return MortalityRecord.objects.all()
         else:
             return MortalityRecord.objects.filter(created_by=user).distinct()
+
 
 class MortalityRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating and deleting a mortality record
     """
+
     serializer_class = MortalityRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['admin']:
+        if user.role in ["admin"]:
             return MortalityRecord.objects.all()
         else:
             return MortalityRecord.objects.filter(created_by=user).distinct()
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def health_dashboard_view(request):
     """
@@ -95,80 +106,97 @@ def health_dashboard_view(request):
     user = request.user
 
     # Get user's accessible batch
-    if user.role in ['admin']:
+    if user.role in ["admin"]:
         from birds.models.models import Batch
-        batches = Batch.objects.filter(status='active')
+
+        batches = Batch.objects.filter(status="active")
     else:
         from apps.birds.models.models import Batch
-        batches = Batch.objects.filter(created_by=user, status='active'
-        ).distinct()
+
+        batches = Batch.objects.filter(created_by=user, status="active").distinct()
 
     # Recent health records
-    recent_records = HealthRecord.objects.filter(
-        batch__in=batches
-    ).order_by('-date')[:10]
+    recent_records = HealthRecord.objects.filter(batch__in=batches).order_by("-date")[
+        :10
+    ]
 
     # Vaccination schedule (upcoming)
     upcoming_vaccinations = HealthRecord.objects.filter(
         flock__in=batches,
-        record_type='vaccination',
+        record_type="vaccination",
         vaccination_details__next_vaccination_date__gte=timezone.now().date(),
-        vaccination_details__next_vaccination_date__lte=timezone.now().date() + timedelta(days=30)
-    ).order_by('vaccination_details__next_vaccination_date')
+        vaccination_details__next_vaccination_date__lte=timezone.now().date()
+        + timedelta(days=30),
+    ).order_by("vaccination_details__next_vaccination_date")
 
     # Mortality statistics (last 30 days)
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
     recent_mortality = MortalityRecord.objects.filter(
-        flock__in=batches,
-        date__gte=thirty_days_ago
+        flock__in=batches, date__gte=thirty_days_ago
     )
 
-    mortality_by_cause = recent_mortality.values('cause_category').annotate(
-        total_count=Sum('count')
-    ).order_by('-total_count')
+    mortality_by_cause = (
+        recent_mortality.values("cause_category")
+        .annotate(total_count=Sum("count"))
+        .order_by("-total_count")
+    )
 
     # Health alerts
     alerts = []
 
     # High mortality rate alert
     for batch in batches:
-        recent_flock_mortality = recent_mortality.filter(batch=batch).aggregate(
-            total=Sum('count')
-        )['total'] or 0
+        recent_flock_mortality = (
+            recent_mortality.filter(batch=batch).aggregate(total=Sum("count"))["total"]
+            or 0
+        )
 
         if recent_flock_mortality > 0:
             mortality_rate = (recent_flock_mortality / batch.current_count) * 100
             if mortality_rate > 5:  # Alert if mortality rate > 5% in 30 days
-                alerts.append({
-                    'type': 'high_mortality',
-                    'batch_id': batch.batch_number,
-                    'message': f'High mortality rate: {mortality_rate:.1f}% in last 30 days',
-                    'severity': 'high' if mortality_rate > 10 else 'medium'
-                })
+                alerts.append(
+                    {
+                        "type": "high_mortality",
+                        "batch_id": batch.batch_number,
+                        "message": f"High mortality rate: {mortality_rate:.1f}% in last 30 days",
+                        "severity": "high" if mortality_rate > 10 else "medium",
+                    }
+                )
 
     dashboard_data = {
-        'recent_health_records': HealthRecordSerializer(recent_records, many=True).data,
-        'upcoming_vaccinations': HealthRecordSerializer(upcoming_vaccinations, many=True).data,
-        'mortality_statistics': {
-            'total_deaths_30_days': recent_mortality.aggregate(total=Sum('count'))['total'] or 0,
-            'by_cause': list(mortality_by_cause),
-            'average_age_at_death': recent_mortality.aggregate(avg=Avg('age_at_death'))['avg'] or 0
+        "recent_health_records": HealthRecordSerializer(recent_records, many=True).data,
+        "upcoming_vaccinations": HealthRecordSerializer(
+            upcoming_vaccinations, many=True
+        ).data,
+        "mortality_statistics": {
+            "total_deaths_30_days": recent_mortality.aggregate(total=Sum("count"))[
+                "total"
+            ]
+            or 0,
+            "by_cause": list(mortality_by_cause),
+            "average_age_at_death": recent_mortality.aggregate(avg=Avg("age_at_death"))[
+                "avg"
+            ]
+            or 0,
         },
-        'health_alerts': alerts,
-        'summary': {
-            'total_active_flocks': batches.count(),
-            'total_health_records': HealthRecord.objects.filter(flock__in=batch).count(),
-            'vaccinations_this_month': HealthRecord.objects.filter(
+        "health_alerts": alerts,
+        "summary": {
+            "total_active_flocks": batches.count(),
+            "total_health_records": HealthRecord.objects.filter(
+                flock__in=batch
+            ).count(),
+            "vaccinations_this_month": HealthRecord.objects.filter(
                 flock__in=batch,
-                record_type='vaccination',
-                date__gte=timezone.now().date().replace(day=1)
-            ).count()
-        }
+                record_type="vaccination",
+                date__gte=timezone.now().date().replace(day=1),
+            ).count(),
+        },
     }
 
     return Response(dashboard_data)
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def flock_health_history_view(request, batch_id):
     """
@@ -177,49 +205,57 @@ def flock_health_history_view(request, batch_id):
     try:
         user = request.user
 
-        if user.role in ['admin']:
+        if user.role in ["admin"]:
             from birds.models.models import Batch
+
             batch = Batch.objects.get(id=batch_id)
         else:
             from birds.models.models import Batch
+
             batch = Batch.objects.get(
-                Q(farm__owner=user) |
-                Q(farm__managers=user) |
-                Q(created_by=user),
-                id=batch_id
+                Q(farm__owner=user) | Q(farm__managers=user) | Q(created_by=user),
+                id=batch_id,
             )
 
         # Get all health records
-        health_records = batch.health_records.all().order_by('-date')
+        health_records = batch.health_records.all().order_by("-date")
 
         # Get mortality records
-        mortality_records = batch.mortality_records.all().order_by('-date')
+        mortality_records = batch.mortality_records.all().order_by("-date")
 
         # Calculate health metrics
-        total_vaccinations = health_records.filter(record_type='vaccination').count()
-        total_treatments = health_records.filter(record_type='treatment').count()
-        total_deaths = mortality_records.aggregate(total=Sum('count'))['total'] or 0
+        total_vaccinations = health_records.filter(record_type="vaccination").count()
+        total_treatments = health_records.filter(record_type="treatment").count()
+        total_deaths = mortality_records.aggregate(total=Sum("count"))["total"] or 0
 
         health_history = {
-            'batch': {
-                'id': batch.id,
-                'batch_id': batch.batch_number,
-                'current_count': batch.current_count,
-                'age_in_days': batch.age_in_days
+            "batch": {
+                "id": batch.id,
+                "batch_id": batch.batch_number,
+                "current_count": batch.current_count,
+                "age_in_days": batch.age_in_days,
             },
-            'health_records': HealthRecordSerializer(health_records, many=True).data,
-            'mortality_records': MortalityRecordSerializer(mortality_records, many=True).data,
-            'health_metrics': {
-                'total_vaccinations': total_vaccinations,
-                'total_treatments': total_treatments,
-                'total_deaths': total_deaths,
-                'mortality_rate': (total_deaths / batch.initial_count * 100) if batch.initial_count > 0 else 0,
-                'health_cost': health_records.aggregate(total=Sum('cost'))['total'] or 0
-            }
+            "health_records": HealthRecordSerializer(health_records, many=True).data,
+            "mortality_records": MortalityRecordSerializer(
+                mortality_records, many=True
+            ).data,
+            "health_metrics": {
+                "total_vaccinations": total_vaccinations,
+                "total_treatments": total_treatments,
+                "total_deaths": total_deaths,
+                "mortality_rate": (
+                    (total_deaths / batch.initial_count * 100)
+                    if batch.initial_count > 0
+                    else 0
+                ),
+                "health_cost": health_records.aggregate(total=Sum("cost"))["total"]
+                or 0,
+            },
         }
 
         return Response(health_history)
 
     except:
         from birds.models.models import Batch
-        return Response({'error': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)

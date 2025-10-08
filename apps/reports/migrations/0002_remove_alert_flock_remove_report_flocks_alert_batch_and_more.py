@@ -7,27 +7,33 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('birds', '0002_remove_flock_breed_remove_flock_created_by_and_more'),
-        ('reports', '0001_initial'),
+        ("birds", "0002_remove_flock_breed_remove_flock_created_by_and_more"),
+        ("reports", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='alert',
-            name='flock',
+            model_name="alert",
+            name="flock",
         ),
         migrations.RemoveField(
-            model_name='report',
-            name='flocks',
+            model_name="report",
+            name="flocks",
         ),
         migrations.AddField(
-            model_name='alert',
-            name='batch',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='birds.batch'),
+            model_name="alert",
+            name="batch",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="alerts",
+                to="birds.batch",
+            ),
         ),
         migrations.AddField(
-            model_name='report',
-            name='batches',
-            field=models.ManyToManyField(blank=True, to='birds.batch'),
+            model_name="report",
+            name="batches",
+            field=models.ManyToManyField(blank=True, to="birds.batch"),
         ),
     ]

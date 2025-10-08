@@ -10,99 +10,261 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('birds', '0001_initial'),
+        ("birds", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='WeightRecord',
+            name="WeightRecord",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField()),
-                ('sample_size', models.PositiveIntegerField(help_text='Number of birds weighed')),
-                ('average_weight', models.DecimalField(decimal_places=2, help_text='Average weight in grams', max_digits=6)),
-                ('min_weight', models.DecimalField(decimal_places=2, help_text='Minimum weight in grams', max_digits=6)),
-                ('max_weight', models.DecimalField(decimal_places=2, help_text='Maximum weight in grams', max_digits=6)),
-                ('age_in_days', models.PositiveIntegerField()),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='weight_records', to='birds.batch')),
-                ('recorded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recorded_weights', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField()),
+                (
+                    "sample_size",
+                    models.PositiveIntegerField(help_text="Number of birds weighed"),
+                ),
+                (
+                    "average_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Average weight in grams",
+                        max_digits=6,
+                    ),
+                ),
+                (
+                    "min_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Minimum weight in grams",
+                        max_digits=6,
+                    ),
+                ),
+                (
+                    "max_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Maximum weight in grams",
+                        max_digits=6,
+                    ),
+                ),
+                ("age_in_days", models.PositiveIntegerField()),
+                ("notes", models.TextField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="weight_records",
+                        to="birds.batch",
+                    ),
+                ),
+                (
+                    "recorded_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recorded_weights",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Weight Record',
-                'verbose_name_plural': 'Weight Records',
-                'db_table': 'weight_records',
-                'ordering': ['-date'],
+                "verbose_name": "Weight Record",
+                "verbose_name_plural": "Weight Records",
+                "db_table": "weight_records",
+                "ordering": ["-date"],
             },
         ),
         migrations.CreateModel(
-            name='FeedRecord',
+            name="FeedRecord",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField()),
-                ('feed_type', models.CharField(choices=[('starter', 'Starter Feed'), ('grower', 'Grower Feed'), ('finisher', 'Finisher Feed'), ('mash', 'Mixed Mash Maize Crumbs')], max_length=20)),
-                ('brand', models.CharField(max_length=200)),
-                ('quantity_kg', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('cost_per_kg', models.DecimalField(decimal_places=2, max_digits=8)),
-                ('supplier', models.CharField(max_length=200)),
-                ('batch_number', models.CharField(blank=True, max_length=100, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='feed_records', to='birds.batch')),
-                ('recorded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recorded_feeds', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField()),
+                (
+                    "feed_type",
+                    models.CharField(
+                        choices=[
+                            ("starter", "Starter Feed"),
+                            ("grower", "Grower Feed"),
+                            ("finisher", "Finisher Feed"),
+                            ("mash", "Mixed Mash Maize Crumbs"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("brand", models.CharField(max_length=200)),
+                ("quantity_kg", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("cost_per_kg", models.DecimalField(decimal_places=2, max_digits=8)),
+                ("supplier", models.CharField(max_length=200)),
+                (
+                    "batch_number",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="feed_records",
+                        to="birds.batch",
+                    ),
+                ),
+                (
+                    "recorded_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recorded_feeds",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Feed Record',
-                'verbose_name_plural': 'Feed Records',
-                'db_table': 'feed_records',
-                'ordering': ['-date'],
+                "verbose_name": "Feed Record",
+                "verbose_name_plural": "Feed Records",
+                "db_table": "feed_records",
+                "ordering": ["-date"],
             },
         ),
         migrations.CreateModel(
-            name='EnvironmentalRecord',
+            name="EnvironmentalRecord",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateTimeField()),
-                ('temperature', models.DecimalField(decimal_places=2, help_text='Temperature in Celsius', max_digits=5)),
-                ('humidity', models.DecimalField(decimal_places=2, help_text='Humidity percentage', max_digits=5)),
-                ('ammonia_level', models.DecimalField(blank=True, decimal_places=2, help_text='Ammonia level in ppm', max_digits=5, null=True)),
-                ('ventilation_rate', models.CharField(blank=True, max_length=100, null=True)),
-                ('lighting_hours', models.DecimalField(blank=True, decimal_places=2, max_digits=4, null=True)),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='environmental_records', to='birds.batch')),
-                ('recorded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recorded_environmental', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateTimeField()),
+                (
+                    "temperature",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Temperature in Celsius",
+                        max_digits=5,
+                    ),
+                ),
+                (
+                    "humidity",
+                    models.DecimalField(
+                        decimal_places=2, help_text="Humidity percentage", max_digits=5
+                    ),
+                ),
+                (
+                    "ammonia_level",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text="Ammonia level in ppm",
+                        max_digits=5,
+                        null=True,
+                    ),
+                ),
+                (
+                    "ventilation_rate",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "lighting_hours",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=4, null=True
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="environmental_records",
+                        to="birds.batch",
+                    ),
+                ),
+                (
+                    "recorded_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recorded_environmental",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Environmental Record',
-                'verbose_name_plural': 'Environmental Records',
-                'db_table': 'environmental_records',
-                'ordering': ['-date'],
+                "verbose_name": "Environmental Record",
+                "verbose_name_plural": "Environmental Records",
+                "db_table": "environmental_records",
+                "ordering": ["-date"],
             },
         ),
         migrations.CreateModel(
-            name='EggProduction',
+            name="EggProduction",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField()),
-                ('total_eggs', models.PositiveIntegerField()),
-                ('grade_a_eggs', models.PositiveIntegerField(default=0)),
-                ('grade_b_eggs', models.PositiveIntegerField(default=0)),
-                ('grade_c_eggs', models.PositiveIntegerField(default=0)),
-                ('cracked_eggs', models.PositiveIntegerField(default=0)),
-                ('dirty_eggs', models.PositiveIntegerField(default=0)),
-                ('average_weight', models.DecimalField(decimal_places=2, help_text='Average egg weight in grams', max_digits=5)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('flock', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='egg_productions', to='birds.flock')),
-                ('recorded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recorded_egg_productions', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField()),
+                ("total_eggs", models.PositiveIntegerField()),
+                ("grade_a_eggs", models.PositiveIntegerField(default=0)),
+                ("grade_b_eggs", models.PositiveIntegerField(default=0)),
+                ("grade_c_eggs", models.PositiveIntegerField(default=0)),
+                ("cracked_eggs", models.PositiveIntegerField(default=0)),
+                ("dirty_eggs", models.PositiveIntegerField(default=0)),
+                (
+                    "average_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Average egg weight in grams",
+                        max_digits=5,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "flock",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="egg_productions",
+                        to="birds.flock",
+                    ),
+                ),
+                (
+                    "recorded_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recorded_egg_productions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Egg Production',
-                'verbose_name_plural': 'Egg Productions',
-                'db_table': 'egg_productions',
-                'ordering': ['-date'],
-                'unique_together': {('flock', 'date')},
+                "verbose_name": "Egg Production",
+                "verbose_name_plural": "Egg Productions",
+                "db_table": "egg_productions",
+                "ordering": ["-date"],
+                "unique_together": {("flock", "date")},
             },
         ),
     ]

@@ -8,21 +8,33 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='HistoricalEntry',
+            name="HistoricalEntry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(default=django.utils.timezone.now)),
-                ('feed_kg', models.DecimalField(decimal_places=2, default='0.00', max_digits=10)),
-                ('birds_count', models.IntegerField(blank=True, null=True)),
-                ('note', models.CharField(blank=True, max_length=255)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(default=django.utils.timezone.now)),
+                (
+                    "feed_kg",
+                    models.DecimalField(
+                        decimal_places=2, default="0.00", max_digits=10
+                    ),
+                ),
+                ("birds_count", models.IntegerField(blank=True, null=True)),
+                ("note", models.CharField(blank=True, max_length=255)),
             ],
             options={
-                'ordering': ['-date'],
+                "ordering": ["-date"],
             },
         ),
     ]

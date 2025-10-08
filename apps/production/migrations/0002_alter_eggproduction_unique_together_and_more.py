@@ -7,27 +7,32 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('birds', '0002_remove_flock_breed_remove_flock_created_by_and_more'),
-        ('production', '0001_initial'),
+        ("birds", "0002_remove_flock_breed_remove_flock_created_by_and_more"),
+        ("production", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='eggproduction',
+            name="eggproduction",
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name='eggproduction',
-            name='batch',
-            field=models.ForeignKey(default='', on_delete=django.db.models.deletion.CASCADE, related_name='egg_productions', to='birds.batch'),
+            model_name="eggproduction",
+            name="batch",
+            field=models.ForeignKey(
+                default="",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="egg_productions",
+                to="birds.batch",
+            ),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(
-            name='eggproduction',
-            unique_together={('batch', 'date')},
+            name="eggproduction",
+            unique_together={("batch", "date")},
         ),
         migrations.RemoveField(
-            model_name='eggproduction',
-            name='flock',
+            model_name="eggproduction",
+            name="flock",
         ),
     ]

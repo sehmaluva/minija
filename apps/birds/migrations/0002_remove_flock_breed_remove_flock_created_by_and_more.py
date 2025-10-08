@@ -6,27 +6,27 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('birds', '0001_initial'),
+        ("birds", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='flock',
-            name='breed',
+            model_name="flock",
+            name="breed",
         ),
         migrations.RemoveField(
-            model_name='flock',
-            name='created_by',
+            model_name="flock",
+            name="created_by",
         ),
         migrations.RemoveField(
-            model_name='flockmovement',
-            name='flock',
+            model_name="flockmovement",
+            name="flock",
         ),
         migrations.RemoveField(
-            model_name='flockmovement',
-            name='recorded_by',
+            model_name="flockmovement",
+            name="recorded_by",
         ),
         migrations.DeleteModel(
-            name='Breed',
+            name="Breed",
         ),
     ]
