@@ -15,7 +15,7 @@ class FeedRecord(models.Model):
         ('finisher', 'Finisher Feed'),
         ('mash', 'Mixed Mash Maize Crumbs'),
     ]
-    
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='feed_records')
     date = models.DateField()
     feed_type = models.CharField(max_length=20, choices=FEED_TYPES)
@@ -26,22 +26,22 @@ class FeedRecord(models.Model):
     batch_number = models.CharField(max_length=100, blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_feeds')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'feed_records'
         verbose_name = 'Feed Record'
         verbose_name_plural = 'Feed Records'
         ordering = ['-date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.feed_type} - {self.quantity_kg}kg"
-    
+
     @property
     def total_cost(self):
         if self.quantity_kg is not None and self.cost_per_kg is not None:
             return self.quantity_kg * self.cost_per_kg
         return Decimal('0.00')
-         
+
 class EggProduction(models.Model):
     """
     Model for tracking egg production (for layers and breeders)
@@ -53,7 +53,7 @@ class EggProduction(models.Model):
         ('cracked', 'Cracked'),
         ('dirty', 'Dirty'),
     ]
-    
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='egg_productions')
     date = models.DateField()
     total_eggs = models.PositiveIntegerField()
@@ -65,17 +65,17 @@ class EggProduction(models.Model):
     average_weight = models.DecimalField(max_digits=5, decimal_places=2, help_text="Average egg weight in grams")
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_egg_productions')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'egg_productions'
         verbose_name = 'Egg Production'
         verbose_name_plural = 'Egg Productions'
         ordering = ['-date']
         unique_together = ['batch', 'date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.date} - {self.total_eggs} eggs"
-    
+
     @property
     def production_rate(self):
         if self.batch.current_count == 0:
@@ -96,13 +96,13 @@ class WeightRecord(models.Model):
     notes = models.TextField(blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_weights')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'weight_records'
         verbose_name = 'Weight Record'
         verbose_name_plural = 'Weight Records'
         ordering = ['-date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.date} - {self.average_weight}g avg"
 
@@ -120,12 +120,12 @@ class EnvironmentalRecord(models.Model):
     notes = models.TextField(blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_environmental')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'environmental_records'
         verbose_name = 'Environmental Record'
         verbose_name_plural = 'Environmental Records'
         ordering = ['-date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.date.strftime('%Y-%m-%d %H:%M')} - {self.temperature}°C"

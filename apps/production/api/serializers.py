@@ -9,7 +9,7 @@ class FeedRecordSerializer(serializers.ModelSerializer):
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
     total_cost = serializers.ReadOnlyField()
-    
+
     class Meta:
         model = FeedRecord
         fields = [
@@ -18,7 +18,7 @@ class FeedRecordSerializer(serializers.ModelSerializer):
             'batch_number', 'recorded_by', 'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
-    
+
     def create(self, validated_data):
         validated_data['recorded_by'] = self.context['request'].user
         return super().create(validated_data)
@@ -30,7 +30,7 @@ class EggProductionSerializer(serializers.ModelSerializer):
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
     production_rate = serializers.ReadOnlyField()
-    
+
     class Meta:
         model = EggProduction
         fields = [
@@ -40,7 +40,7 @@ class EggProductionSerializer(serializers.ModelSerializer):
             'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
-    
+
     def validate(self, attrs):
         # Validate that sum of graded eggs equals total eggs
         total_graded = (
@@ -50,14 +50,14 @@ class EggProductionSerializer(serializers.ModelSerializer):
             attrs.get('cracked_eggs', 0) +
             attrs.get('dirty_eggs', 0)
         )
-        
+
         if total_graded != attrs.get('total_eggs', 0):
             raise serializers.ValidationError(
                 "Sum of graded eggs must equal total eggs"
             )
-        
+
         return attrs
-    
+
     def create(self, validated_data):
         validated_data['recorded_by'] = self.context['request'].user
         return super().create(validated_data)
@@ -68,7 +68,7 @@ class WeightRecordSerializer(serializers.ModelSerializer):
     """
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
-    
+
     class Meta:
         model = WeightRecord
         fields = [
@@ -77,23 +77,23 @@ class WeightRecordSerializer(serializers.ModelSerializer):
             'recorded_by', 'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
-    
+
     def validate(self, attrs):
         min_weight = attrs.get('min_weight')
         max_weight = attrs.get('max_weight')
         average_weight = attrs.get('average_weight')
-        
+
         if min_weight and max_weight and min_weight > max_weight:
             raise serializers.ValidationError("Minimum weight cannot be greater than maximum weight")
-        
+
         if min_weight and average_weight and min_weight > average_weight:
             raise serializers.ValidationError("Minimum weight cannot be greater than average weight")
-        
+
         if max_weight and average_weight and max_weight < average_weight:
             raise serializers.ValidationError("Maximum weight cannot be less than average weight")
-        
+
         return attrs
-    
+
     def create(self, validated_data):
         validated_data['recorded_by'] = self.context['request'].user
         return super().create(validated_data)
@@ -104,7 +104,7 @@ class EnvironmentalRecordSerializer(serializers.ModelSerializer):
     """
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
-    
+
     class Meta:
         model = EnvironmentalRecord
         fields = [
@@ -113,7 +113,7 @@ class EnvironmentalRecordSerializer(serializers.ModelSerializer):
             'recorded_by', 'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
-    
+
     def create(self, validated_data):
         validated_data['recorded_by'] = self.context['request'].user
         return super().create(validated_data)

@@ -14,24 +14,24 @@ class BatchSerializer(serializers.ModelSerializer):
 
     def get_age_in_weeks(self, obj):
         return round(obj.age_in_days / 7, 1)
-    
+
     def get_survival_rate(self, obj):
         if obj.initial_count == 0:
             return 0
         return round((obj.current_count / obj.initial_count) * 100, 2)
-    
+
     def validate(self, attrs):
         # Validate that current_count doesn't exceed initial_count
         current_count = attrs.get('current_count')
         initial_count = attrs.get('initial_count')
-        
+
         if self.instance:
             current_count = current_count or self.instance.current_count
             initial_count = initial_count or self.instance.initial_count
-        
+
         if current_count and initial_count and current_count > initial_count:
             raise serializers.ValidationError("Current count cannot exceed initial count")
-        
+
         # # Validate building capacity
         # building = attrs.get('building')
         # if building and current_count:
@@ -43,9 +43,9 @@ class BatchSerializer(serializers.ModelSerializer):
         #         raise serializers.ValidationError(
         #             f"Building capacity exceeded. Available space: {building.capacity - existing_birds}"
         #         )
-        
+
         return attrs
-    
+
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
@@ -58,12 +58,11 @@ class BatchSummarySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'batch_number', 'current_count', 'age_in_weeks', 'survival_rate'
         ]
-    
+
     def get_age_in_weeks(self, obj):
         return round(obj.age_in_days / 7, 1)
-    
+
     def get_survival_rate(self, obj):
         if obj.initial_count == 0:
             return 0
         return round((obj.current_count / obj.initial_count) * 100, 2)
-      

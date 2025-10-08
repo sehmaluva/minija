@@ -16,7 +16,7 @@ class HealthRecord(models.Model):
         ('disease_outbreak', 'Disease Outbreak'),
         ('mortality', 'Mortality Record'),
     ]
-    
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='health_records')
     record_type = models.CharField(max_length=20, choices=RECORD_TYPES)
     date = models.DateTimeField()
@@ -27,13 +27,13 @@ class HealthRecord(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_health_records')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         db_table = 'health_records'
         verbose_name = 'Health Record'
         verbose_name_plural = 'Health Records'
         ordering = ['-date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.record_type} - {self.date.strftime('%Y-%m-%d')}"
 
@@ -49,12 +49,12 @@ class Vaccination(models.Model):
     administration_method = models.CharField(max_length=100)
     birds_vaccinated = models.PositiveIntegerField()
     next_vaccination_date = models.DateField(null=True, blank=True)
-    
+
     class Meta:
         db_table = 'vaccinations'
         verbose_name = 'Vaccination'
         verbose_name_plural = 'Vaccinations'
-    
+
     def __str__(self):
         return f"{self.vaccine_name} - {self.health_record.batch.batch_number}"
 class Medication(models.Model):
@@ -69,12 +69,12 @@ class Medication(models.Model):
     duration_days = models.PositiveIntegerField()
     withdrawal_period = models.PositiveIntegerField(help_text="Withdrawal period in days")
     birds_treated = models.PositiveIntegerField()
-    
+
     class Meta:
         db_table = 'medications'
         verbose_name = 'Medication'
         verbose_name_plural = 'Medications'
-    
+
     def __str__(self):
         return f"{self.medication_name} - {self.health_record. batch.batch_number}"
 
@@ -92,7 +92,7 @@ class MortalityRecord(models.Model):
         ('culling', 'Culling'),
         ('other', 'Other'),
     ]
-    
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='mortality_records')
     date = models.DateField()
     count = models.PositiveIntegerField()
@@ -102,12 +102,12 @@ class MortalityRecord(models.Model):
     notes = models.TextField(blank=True, null=True)
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recorded_mortalities')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         db_table = 'mortality_records'
         verbose_name = 'Mortality Record'
         verbose_name_plural = 'Mortality Records'
         ordering = ['-date']
-    
+
     def __str__(self):
         return f"{self.batch.batch_number} - {self.count} birds - {self.date}"

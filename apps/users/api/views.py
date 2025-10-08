@@ -18,9 +18,9 @@ class CookieTokenRefreshView(TokenRefreshView):
         refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
         if refresh_token:
             request.data['refresh'] = refresh_token
-        
+
         response = super().post(request, *args, **kwargs)
-        
+
         if response.status_code == 200:
             # Set new access token in cookie
             access_token = response.data.get('access')
@@ -32,14 +32,14 @@ class CookieTokenRefreshView(TokenRefreshView):
                     secure=False,  # Set to True in production with HTTPS
                     samesite='Lax'
                 )
-        
+
         return response
 from django.contrib.auth import login, logout
 from apps.users.models.models import User
 from .serializers import (
-    UserRegistrationSerializer, 
-    UserLoginSerializer, 
-    UserSerializer, 
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer
 )
@@ -51,21 +51,21 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
+
         # Create JWT tokens for the user
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
-        
+
         response = Response({
             'user': UserSerializer(user).data,
             'message': 'User registered successfully'
         }, status=status.HTTP_201_CREATED)
-        
+
         # Set cookies
         response.set_cookie(
             'access_token',
@@ -81,7 +81,7 @@ class RegisterView(generics.CreateAPIView):
             secure=False,  # Set to True in production with HTTPS
             samesite='Lax'
         )
-        
+
         return response
 
 @api_view(['POST'])
@@ -95,16 +95,16 @@ def login_view(request):
     if serializer.is_valid():
         user = serializer.validated_data['user']
         login(request, user)
-        
+
         # Create JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
-        
+
         response = Response({
             'user': UserSerializer(user).data,
             'message': 'Login successful'
         }, status=status.HTTP_200_OK)
-        
+
         # Set cookies
         response.set_cookie(
             'access_token',
@@ -120,9 +120,9 @@ def login_view(request):
             secure=False,  # Set to True in production with HTTPS
             samesite='Lax'
         )
-        
+
         return response
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -135,11 +135,11 @@ def logout_view(request):
     try:
         logout(request)
         response = Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
-        
+
         # Clear cookies
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
-        
+
         return response
     except:
         return Response({'error': 'Something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
@@ -150,10 +150,10 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     """
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_object(self):
         return self.request.user
-    
+
     def get_serializer_class(self):
         if self.request.method == 'PUT' or self.request.method == 'PATCH':
             return UserUpdateSerializer
@@ -171,15 +171,15 @@ def change_password_view(request):
         user = request.user
         user.set_password(serializer.validated_data['new_password'])
         user.save()
-        
+
         # Create new JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
-        
+
         response = Response({
             'message': 'Password changed successfully'
         }, status=status.HTTP_200_OK)
-        
+
         # Update cookies with new tokens
         response.set_cookie(
             'access_token',
@@ -195,9 +195,9 @@ def change_password_view(request):
             secure=False,  # Set to True in production with HTTPS
             samesite='Lax'
         )
-        
+
         return response
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(generics.ListAPIView):
@@ -207,7 +207,7 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.role == 'admin':
@@ -241,9 +241,9 @@ def user_permissions_view(request):
             'can_manage_production': True,
         },
     }
-    
+
     user_permissions = permissions_map.get(user.role, {})
-    
+
     return Response({
         'user': UserSerializer(user).data,
         'permissions': user_permissions

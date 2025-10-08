@@ -34,7 +34,7 @@ class HealthRecordSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True)
     vaccination_details = VaccinationSerializer(read_only=True)
     medication_details = MedicationSerializer(read_only=True)
-    
+
     class Meta:
         model = HealthRecord
         fields = [
@@ -44,7 +44,7 @@ class HealthRecordSerializer(serializers.ModelSerializer):
             'vaccination_details', 'medication_details'
         ]
         read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
-    
+
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
@@ -55,27 +55,27 @@ class HealthRecordCreateSerializer(serializers.ModelSerializer):
     """
     vaccination_details = VaccinationSerializer(required=False)
     medication_details = MedicationSerializer(required=False)
-    
+
     class Meta:
         model = HealthRecord
         fields = [
             'batch', 'record_type', 'date', 'description', 'veterinarian',
             'cost', 'notes', 'vaccination_details', 'medication_details'
         ]
-    
+
     def create(self, validated_data):
         vaccination_data = validated_data.pop('vaccination_details', None)
         medication_data = validated_data.pop('medication_details', None)
-        
+
         validated_data['created_by'] = self.context['request'].user
         health_record = HealthRecord.objects.create(**validated_data)
-        
+
         if vaccination_data and health_record.record_type == 'vaccination':
             Vaccination.objects.create(health_record=health_record, **vaccination_data)
-        
+
         if medication_data and health_record.record_type == 'medication':
             Medication.objects.create(health_record=health_record, **medication_data)
-        
+
         return health_record
 
 class MortalityRecordSerializer(serializers.ModelSerializer):
@@ -84,7 +84,7 @@ class MortalityRecordSerializer(serializers.ModelSerializer):
     """
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True)
     recorded_by_name = serializers.CharField(source='recorded_by.full_name', read_only=True)
-    
+
     class Meta:
         model = MortalityRecord
         fields = [
@@ -93,16 +93,16 @@ class MortalityRecordSerializer(serializers.ModelSerializer):
             'recorded_by_name', 'created_at'
         ]
         read_only_fields = ('id', 'recorded_by', 'created_at')
-    
+
     def create(self, validated_data):
         validated_data['recorded_by'] = self.context['request'].user
         mortality_record = super().create(validated_data)
-        
+
         # Update batch current count
         batch = mortality_record.batch
         batch.current_count = max(0, batch.current_count - mortality_record.count)
         if batch.current_count == 0:
             batch.status = 'deceased'
         batch.save()
-        
+
         return mortality_record

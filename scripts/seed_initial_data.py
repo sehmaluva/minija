@@ -25,7 +25,7 @@ User = get_user_model()
 
 def create_initial_data():
     print("Creating initial data for poultry management system...")
-    
+
     # Create admin user
     admin_user, created = User.objects.get_or_create(
         email='admin@poultry.com',
@@ -42,7 +42,7 @@ def create_initial_data():
         admin_user.set_password('admin123')
         admin_user.save()
         print("✓ Created admin user")
-    
+
     # Create standard user
     standard_user, created = User.objects.get_or_create(
         email='user@poultry.com',
@@ -57,7 +57,7 @@ def create_initial_data():
         standard_user.set_password('user123')
         standard_user.save()
         print("✓ Created standard user")
-    
+
     # Create breeds
     breeds_data = [
         {
@@ -70,7 +70,7 @@ def create_initial_data():
         },
         {
             'name': 'Leghorn',
-            'species': 'Chicken', 
+            'species': 'Chicken',
             'description': 'Excellent white egg layer breed',
             'average_weight': 2.0,
             'egg_production_rate': 300,
@@ -93,7 +93,7 @@ def create_initial_data():
             'maturity_age': 145
         }
     ]
-    
+
     for breed_data in breeds_data:
         breed, created = Breed.objects.get_or_create(
             name=breed_data['name'],
@@ -101,14 +101,14 @@ def create_initial_data():
         )
         if created:
             print(f"✓ Created breed: {breed.name}")
-    
+
     # Create sample locations (simple strings now)
     layer_location = 'Layer House 1'
     broiler_location = 'Broiler House 1'
 
     leghorn_breed = Breed.objects.get(name='Leghorn')
     broiler_breed = Breed.objects.get(name='Broiler Ross 308')
-    
+
     # Layer flock
     layer_flock, created = Flock.objects.get_or_create(
         flock_id='LH1-2024-001',
@@ -127,7 +127,7 @@ def create_initial_data():
     )
     if created:
         print(f"✓ Created flock: {layer_flock.flock_id}")
-    
+
     # Broiler flock
     broiler_flock, created = Flock.objects.get_or_create(
         flock_id='BH1-2024-001',
@@ -146,20 +146,20 @@ def create_initial_data():
     )
     if created:
         print(f"✓ Created flock: {broiler_flock.flock_id}")
-    
+
     # Create sample health records
     # (Health records skipped in simplified seed for now)
-    
+
     # Create sample feed records
     # (Feed and egg production records skipped for simplicity)
-    
+
     # Create sample egg production record
-    
-    
+
+
     print("\n🎉 Initial data creation completed successfully!")
     print("\nDefault login credentials:")
     print("Admin: admin@poultry.com / admin123")
-    print("Standard User: user@poultry.com / user123") 
+    print("Standard User: user@poultry.com / user123")
 
 if __name__ == '__main__':
     create_initial_data()

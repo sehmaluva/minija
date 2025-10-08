@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.production.models.models import FeedRecord, EggProduction, WeightRecord, EnvironmentalRecord
 from apps.production.api.serializers import (
-    FeedRecordSerializer, EggProductionSerializer, 
+    FeedRecordSerializer, EggProductionSerializer,
     WeightRecordSerializer, EnvironmentalRecordSerializer
 )
 
@@ -23,7 +23,7 @@ class FeedRecordListCreateView(generics.ListCreateAPIView):
     search_fields = ['brand', 'supplier', 'batch__batch_id']
     ordering_fields = ['date', 'quantity_kg', 'cost_per_kg']
     ordering = ['-date']
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.role in ['admin']:
@@ -42,7 +42,7 @@ class EggProductionListCreateView(generics.ListCreateAPIView):
     search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'total_eggs', 'production_rate']
     ordering = ['-date']
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.role in ['admin']:
@@ -61,7 +61,7 @@ class WeightRecordListCreateView(generics.ListCreateAPIView):
     search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'average_weight', 'age_in_days']
     ordering = ['-date']
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.role in ['admin']:
@@ -80,7 +80,7 @@ class EnvironmentalRecordListCreateView(generics.ListCreateAPIView):
     search_fields = ['batch__batch_id']
     ordering_fields = ['date', 'temperature', 'humidity']
     ordering = ['-date']
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.role in ['admin']:
@@ -95,7 +95,7 @@ def production_dashboard_view(request):
     API view for production dashboard statistics
     """
     user = request.user
-    
+
     # Get user's accessible flocks
     if user.role in ['admin']:
         from apps.birds.models.models import Batch
@@ -103,14 +103,14 @@ def production_dashboard_view(request):
     else:
         from apps.birds.models.models import Batch
         batches = Batch.objects.filter(created_by=user,status='active').distinct()
-    
+
     # Feed consumption (last 30 days)
     thirty_days_ago = timezone.now().date() - timedelta(days=30)
     recent_feed = FeedRecord.objects.filter(
         batch__in=batches,
         date__gte=thirty_days_ago
     )
-    
+
     feed_stats = {
         'total_consumption': recent_feed.aggregate(total=Sum('quantity_kg'))['total'] or 0,
         'total_cost': sum(record.total_cost for record in recent_feed),
@@ -119,14 +119,14 @@ def production_dashboard_view(request):
             total_cost=Sum('quantity_kg') * Avg('cost_per_kg')
         ).order_by('-total_kg')
     }
-    
+
     # #Egg production (last 30 days) - only for layer batches
     # layer_flocks = batches.filter(flock_type__in=['layer', 'breeder'])
     # recent_eggs = EggProduction.objects.filter(
     #     batch__in=layer_flocks,
     #     date__gte=thirty_days_ago
     # )
-    
+
     # egg_stats = {
     #     'total_eggs': recent_eggs.aggregate(total=Sum('total_eggs'))['total'] or 0,
     #     'average_production_rate': recent_eggs.aggregate(avg=Avg('production_rate'))['avg'] or 0,
@@ -138,31 +138,31 @@ def production_dashboard_view(request):
     #         'dirty': recent_eggs.aggregate(total=Sum('dirty_eggs'))['total'] or 0,
     #     }
     # }
-    
+
     # Weight tracking
     recent_weights = WeightRecord.objects.filter(
         batch__in=batches,
         date__gte=thirty_days_ago
     )
-    
+
     weight_stats = {
         'average_weight': recent_weights.aggregate(avg=Avg('average_weight'))['avg'] or 0,
         'weight_gain_trend': [],  # This would need more complex calculation
         'records_count': recent_weights.count()
     }
-    
+
     # Environmental conditions
     recent_environmental = EnvironmentalRecord.objects.filter(
         batch__in=batches,
         date__gte=thirty_days_ago
     )
-    
+
     environmental_stats = {
         'average_temperature': recent_environmental.aggregate(avg=Avg('temperature'))['avg'] or 0,
         'average_humidity': recent_environmental.aggregate(avg=Avg('humidity'))['avg'] or 0,
         'records_count': recent_environmental.count()
     }
-    
+
     dashboard_data = {
         'feed_consumption': feed_stats,
         # 'egg_production': egg_stats,
@@ -174,7 +174,7 @@ def production_dashboard_view(request):
             'total_birds': batches.aggregate(total=Sum('current_count'))['total'] or 0
         }
     }
-    
+
     return Response(dashboard_data)
 
 @api_view(['GET'])
@@ -185,26 +185,26 @@ def batch_production_analysis_view(request, batch_number):
     """
     try:
         user = request.user
-        
+
         if user.role in ['admin']:
             from apps.birds.models.models import Batch
             batch = Batch.objects.get(id=batch_number)
         else:
             from apps.birds.models.models import Batch
             batch = Batch.objects.get(created_by=user, id=batch_id)
-        
+
         # Feed consumption analysis
         feed_records = batch.feed_records.all().order_by('date')
         total_feed_consumed = feed_records.aggregate(total=Sum('quantity_kg'))['total'] or 0
         total_feed_cost = sum(record.total_cost for record in feed_records)
-        
+
         # # Egg production analysis (if applicable)
         # egg_data = {}
         # if batch.flock_type in ['layer', 'breeder']:
         #     egg_records = batch.egg_productions.all().order_by('date')
         #     total_eggs = egg_records.aggregate(total=Sum('total_eggs'))['total'] or 0
         #     avg_production_rate = egg_records.aggregate(avg=Avg('production_rate'))['avg'] or 0
-            
+
         #     egg_data = {
         #         'total_eggs_produced': total_eggs,
         #         'average_production_rate': avg_production_rate,
@@ -217,7 +217,7 @@ def batch_production_analysis_view(request, batch_number):
         #             for record in egg_records[-30:]  # Last 30 records
         #         ]
         #     }
-        
+
         # Weight tracking analysis
         weight_records = batch.weight_records.all().order_by('date')
         weight_trend = [
@@ -228,7 +228,7 @@ def batch_production_analysis_view(request, batch_number):
             }
             for record in weight_records
         ]
-        
+
         # Feed conversion ratio (if weight data available)
         fcr = None
         if weight_records.exists() and total_feed_consumed > 0:
@@ -237,7 +237,7 @@ def batch_production_analysis_view(request, batch_number):
                 weight_gain = latest_weight.average_weight - (weight_records.first().average_weight if weight_records.first() else 0)
                 if weight_gain > 0:
                     fcr = total_feed_consumed / (weight_gain * batch.current_count / 1000)  # Convert to kg
-        
+
         analysis_data = {
             'batch_info': {
                 'id': batch.id,
@@ -264,9 +264,9 @@ def batch_production_analysis_view(request, batch_number):
                 'feed_efficiency': fcr
             }
         }
-        
+
         return Response(analysis_data)
-        
+
     except:
         from apps.birds.models.models import Batch
         return Response({'error': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)

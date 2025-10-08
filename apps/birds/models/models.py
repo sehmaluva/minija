@@ -11,7 +11,7 @@ class Batch(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('sold', 'Sold'),
-        
+
         ]
     batch_number = models.CharField(max_length=100, unique=True)
     supplier = models.CharField(max_length=100)
@@ -23,25 +23,24 @@ class Batch(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_batch')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         db_table = 'batches'
         verbose_name = 'batch'
         verbose_name_plural = 'batches'
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.batch_number
-    
+
     @property
     def age_in_days(self):
         from django.utils import timezone
         import datetime
         return (datetime.datetime.today() - self.collection_date).days
-    
+
     @property
     def mortality_rate(self):
         if self.initial_count == 0:
             return 0
         return ((self.initial_count - self.current_count) / self.initial_count) * 100 if self.initial_count and self.current_count else None
-

@@ -1,8 +1,5 @@
-    """Models for user management.
+"""Models for user management."""
 
-    Returns:
-        _type_: _description_
-    """
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
