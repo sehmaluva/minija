@@ -4,7 +4,6 @@
 
 ### Core Functionality
 
-- **User Management**: Role-based authentication (Admin, User)
 - **Accounting Management**: Keep track of sales and costs.
 - **Batch Management**: Complete batch lifecycle management.
 - **Health Tracking**: Vaccination schedules, medication records, mortality tracking.
