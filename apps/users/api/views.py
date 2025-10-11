@@ -124,6 +124,7 @@ def login_view(request):
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="Lax",
+            max_age=1800,
         )
         response.set_cookie(
             "refresh_token",
@@ -131,6 +132,7 @@ def login_view(request):
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="Lax",
+            max_age=1800,
         )
 
         return response
