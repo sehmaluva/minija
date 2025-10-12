@@ -84,6 +84,7 @@ class RegisterView(generics.CreateAPIView):
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="Lax",
+            max_age=1800,
         )
         response.set_cookie(
             "refresh_token",
@@ -91,6 +92,7 @@ class RegisterView(generics.CreateAPIView):
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="Lax",
+            max_age=1800,
         )
 
         return response
