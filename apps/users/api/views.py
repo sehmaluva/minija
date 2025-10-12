@@ -35,6 +35,7 @@ class CookieTokenRefreshView(TokenRefreshView):
                     httponly=True,
                     secure=False,  # Set to True in production with HTTPS
                     samesite="Lax",
+                    max_age=1800,
                 )
 
         return response
