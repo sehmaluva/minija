@@ -153,9 +153,49 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Spectacular settings for API documentation
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Poultry Management API',
-    'DESCRIPTION': 'A comprehensive API for managing broilers',
+    'DESCRIPTION': 'A comprehensive API for managing broilers, including production tracking, health monitoring, accounting, orders, and forecasting',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'CONTACT': {
+        'name': 'API Support',
+        'email': 'support@example.com',
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+    },
+    'SCHEMA_PATH_PREFIX': '/api',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': True,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_AUTHENTICATION': None,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        'filter': True,
+        'tryItOutEnabled': True,
+        'defaultModelsExpandDepth': 2,
+        'defaultModelExpandDepth': 2,
+    },
+    'SWAGGER_UI_FAVICON_HREF': None,
+    'REDOC_UI_SETTINGS': {
+        'hideDownloadButton': False,
+        'expandResponses': '200,201',
+        'pathInMiddlePanel': True,
+    },
+    'PREPROCESSING_HOOKS': [],
+    'POSTPROCESSING_HOOKS': [],
+    'ENUM_NAME_OVERRIDES': {},
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and authorization endpoints'},
+        {'name': 'Flocks', 'description': 'Flock management operations'},
+        {'name': 'Production', 'description': 'Egg production tracking'},
+        {'name': 'Health', 'description': 'Health monitoring and management'},
+        {'name': 'Accounting', 'description': 'Financial transactions and accounting'},
+        {'name': 'Orders', 'description': 'Order management'},
+        {'name': 'Forecast', 'description': 'Production forecasting'},
+        {'name': 'Reports', 'description': 'Reports and analytics'},
+    ],
 }
 
 # Celery Configuration (for background tasks)
