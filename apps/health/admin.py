@@ -23,7 +23,6 @@ class HealthRecordAdmin(admin.ModelAdmin):
         "batch",
         "record_type",
         "date",
-        "veterinarian",
         "cost",
         "created_by",
         "created_at",
