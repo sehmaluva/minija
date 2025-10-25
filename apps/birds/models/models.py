@@ -1,7 +1,7 @@
+"""Broiler-focused bird models (farms/buildings removed)."""
+
 from django.db import models
 from django.contrib.auth import get_user_model
-
-"""Broiler-focused bird models (farms/buildings removed)."""
 
 User = get_user_model()
 
@@ -40,9 +40,26 @@ class Batch(models.Model):
     @property
     def age_in_days(self):
         from django.utils import timezone
-        import datetime
 
-        return (datetime.datetime.today() - self.collection_date).days
+        # collection_date may be None (partial records) or naive/aware.
+        # Return 0 when missing and handle naive/aware datetimes safely.
+        if not self.collection_date:
+            return 0
+
+        now = timezone.now()
+        collection_date = self.collection_date
+
+        try:
+            if collection_date.tzinfo is None and timezone.is_aware(now):
+                from django.utils import timezone as _tz
+
+                collection_date = _tz.make_aware(collection_date)
+        except Exception:
+            # Fall back if conversion fails
+            pass
+
+        delta = now - collection_date
+        return delta.days if hasattr(delta, "days") else 0
 
     @property
     def mortality_rate(self):
