@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",
+    "django_extensions",
     # custom apps (broiler-focused: farms module removed in clean reset)
     "apps.health",
     "apps.birds",
