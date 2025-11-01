@@ -111,7 +111,6 @@ def login_view(request):
         user = serializer.validated_data["user"]
         login(request, user)
 
-        # Create JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
