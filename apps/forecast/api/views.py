@@ -20,7 +20,6 @@ def simple_linear_predict(xs, ys):
     b = mean_y - a * mean_x
     return a * (n) + b
 
-
 class FeedPredictionView(APIView):
     """Predict next day's feed requirement (kg) using a simple linear trend on recent entries."""
 

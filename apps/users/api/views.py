@@ -51,7 +51,6 @@ from .serializers import (
     ChangePasswordSerializer,
 )
 
-
 class RegisterView(generics.CreateAPIView):
     """
     API view for user registration
