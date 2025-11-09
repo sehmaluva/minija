@@ -1,3 +1,5 @@
+"""User-related API views for registration, login, profile management, and permissions."""
+
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -7,6 +9,15 @@ from django.contrib.auth import login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from apps.users.models.models import User
+from django.contrib.auth import login, logout
+from apps.users.models.models import User
+from apps.users.api.serializers import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
+    ChangePasswordSerializer,
+)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -40,16 +51,6 @@ class CookieTokenRefreshView(TokenRefreshView):
 
         return response
 
-
-from django.contrib.auth import login, logout
-from apps.users.models.models import User
-from .serializers import (
-    UserRegistrationSerializer,
-    UserLoginSerializer,
-    UserSerializer,
-    UserUpdateSerializer,
-    ChangePasswordSerializer,
-)
 
 class RegisterView(generics.CreateAPIView):
     """
