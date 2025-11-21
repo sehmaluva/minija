@@ -3,7 +3,6 @@ name: Bug report
 about: Report a reproducible bug
 title: 'Bug: '
 labels: bug
-project: minija development
 
 ---
 
