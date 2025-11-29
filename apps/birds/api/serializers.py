@@ -1,3 +1,5 @@
+""" "Serializers for the Batch model in the birds app."""
+
 from rest_framework import serializers
 from apps.birds.models.models import Batch
 from apps.users.api.serializers import UserSerializer
@@ -53,11 +55,14 @@ class BatchSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        print(self.context["request"].user, " this is the user")
         validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)
 
 
 class BatchSummarySerializer(serializers.ModelSerializer):
+    """Serializer for batch summary with computed fields."""
+
     age_in_weeks = serializers.SerializerMethodField()
     survival_rate = serializers.SerializerMethodField()
 

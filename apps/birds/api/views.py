@@ -1,3 +1,5 @@
+"""Batch API views for listing, creating, updating, and retrieving batch statistics and performance."""
+
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -28,6 +30,10 @@ class BatchListCreateView(generics.ListCreateAPIView):
             return Batch.objects.all()
         else:
             return Batch.objects.filter(created_by=user).distinct()
+
+    def create(self, validated_data):
+        validated_data["created_by"] = self.request.user
+        return super().create(validated_data)
 
 
 class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
