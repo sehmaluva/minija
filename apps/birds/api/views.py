@@ -31,10 +31,6 @@ class BatchListCreateView(generics.ListCreateAPIView):
         else:
             return Batch.objects.filter(created_by=user).distinct()
 
-    def create(self, validated_data):
-        validated_data["created_by"] = self.request.user
-        return super().create(validated_data)
-
 
 class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BatchSerializer

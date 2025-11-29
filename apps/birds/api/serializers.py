@@ -28,6 +28,7 @@ class BatchSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Validate that current_count doesn't exceed initial_count
+        print("Validating batch data...")
         current_count = attrs.get("current_count")
         initial_count = attrs.get("initial_count")
 
