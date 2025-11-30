@@ -6,10 +6,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth import login, logout
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from apps.users.models.models import User
-from django.contrib.auth import login, logout
 from apps.users.models.models import User
 from apps.users.api.serializers import (
     UserRegistrationSerializer,
@@ -20,36 +16,9 @@ from apps.users.api.serializers import (
 )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
-class CookieTokenRefreshView(TokenRefreshView):
-    """
-    Custom token refresh view that handles refresh tokens from cookies
-    """
-
-    def post(self, request, *args, **kwargs):
-        # Get refresh token from cookie if not in request data
-        refresh_token = request.data.get("refresh") or request.COOKIES.get(
-            "refresh_token"
-        )
-        if refresh_token:
-            request.data["refresh"] = refresh_token
-
-        response = super().post(request, *args, **kwargs)
-
-        if response.status_code == 200:
-            # Set new access token in cookie
-            access_token = response.data.get("access")
-            if access_token:
-                response.set_cookie(
-                    "access_token",
-                    access_token,
-                    httponly=True,
-                    secure=False,  # Set to True in production with HTTPS
-                    samesite="Lax",
-                    max_age=1800,
-                )
-
-        return response
+# The CookieTokenRefreshView is no longer needed.
+# You can remove it and use the standard TokenRefreshView from simple_jwt in your urls.py
+# like this: path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 
 class RegisterView(generics.CreateAPIView):
@@ -67,40 +36,20 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
 
         refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
 
-        response = Response(
+        return Response(
             {
                 "user": UserSerializer(user).data,
                 "message": "User registered successfully",
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
             },
             status=status.HTTP_201_CREATED,
         )
 
-        # Set cookies
-        response.set_cookie(
-            "access_token",
-            access_token,
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-        response.set_cookie(
-            "refresh_token",
-            str(refresh),
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-
-        return response
-
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
-@csrf_exempt
 def login_view(request):
     """
     API view for user login
@@ -111,53 +60,33 @@ def login_view(request):
         login(request, user)
 
         refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
 
-        response = Response(
-            {"user": UserSerializer(user).data, "message": "Login successful"},
-            status=status.HTTP_200_OK,
-        )
+        response_data = {
+            "user": UserSerializer(user).data,
+            "message": "Login successful",
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
-        # Set cookies
-        response.set_cookie(
-            "access_token",
-            access_token,
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-        response.set_cookie(
-            "refresh_token",
-            str(refresh),
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-
-        return response
+        return Response(response_data, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
-@csrf_exempt
 def logout_view(request):
     """
-    API view for user logout
+    API view for user logout.
+    Client should handle token invalidation.
+    Optionally, you can implement token blacklisting here.
     """
     try:
+        # The following line is for Django's session-based authentication
+        # and is not strictly necessary for a stateless JWT setup, but doesn't harm.
         logout(request)
-        response = Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
-
-        # Clear cookies
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
-
-        return response
-    except:
+        return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+    except Exception as e:
         return Response(
             {"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -182,7 +111,6 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
-@csrf_exempt
 def change_password_view(request):
     """
     API view for changing password
@@ -197,31 +125,15 @@ def change_password_view(request):
 
         # Create new JWT tokens
         refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
 
-        response = Response(
-            {"message": "Password changed successfully"}, status=status.HTTP_200_OK
+        return Response(
+            {
+                "message": "Password changed successfully",
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            },
+            status=status.HTTP_200_OK,
         )
-
-        # Update cookies with new tokens
-        response.set_cookie(
-            "access_token",
-            access_token,
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-        response.set_cookie(
-            "refresh_token",
-            str(refresh),
-            httponly=True,
-            secure=False,  # Set to True in production with HTTPS
-            samesite="Lax",
-            max_age=1800,
-        )
-
-        return response
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
