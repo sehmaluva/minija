@@ -191,7 +191,7 @@ SPECTACULAR_SETTINGS = {
             "name": "Authentication",
             "description": "User authentication and authorization endpoints",
         },
-        {"name": "Flocks", "description": "Flock management operations"},
+        {"name": "Batch", "description": "Batch management operations"},
         {"name": "Production", "description": "Egg production tracking"},
         {"name": "Health", "description": "Health monitoring and management"},
         {"name": "Accounting", "description": "Financial transactions and accounting"},
@@ -214,8 +214,9 @@ AUTH_USER_MODEL = "users.User"
 
 # JWT Settings
 from datetime import timedelta
+from typing import Any, Dict
 
-SIMPLE_JWT = {
+SIMPLE_JWT: Dict[str, Any] = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
@@ -244,7 +245,7 @@ SIMPLE_JWT = {
 
 # Logging configuration
 LOGS_DIR = os.path.join(BASE_DIR, "core", "logs")
-LOGGING = {
+LOGGING: Dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
@@ -283,7 +284,7 @@ for app_name in [app for app in INSTALLED_APPS if app.startswith("apps.")]:
     LOGGING["handlers"][f"{app_name_short}_file"] = {
         "class": "logging.handlers.RotatingFileHandler",
         "formatter": "standard",
-        "filename": os.path.join(LOGS_DIR, f"app.{app_name_short}.log"),
+        "filename": os.path.join(LOGS_DIR, f"{app_name_short}.log"),
         "maxBytes": 1024 * 1024 * 5,  # 5MB
         "backupCount": 5,
         "encoding": "utf8",

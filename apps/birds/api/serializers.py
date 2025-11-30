@@ -16,7 +16,8 @@ class BatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Batch
-        exclude = ["id"]
+        fields = "__all__"
+        extra_kwargs = {"created_by": {"read_only": True}}
 
     def get_age_in_weeks(self, obj):
         return round(obj.age_in_days / 7, 1)
@@ -28,7 +29,6 @@ class BatchSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Validate that current_count doesn't exceed initial_count
-        print("Validating batch data...")
         current_count = attrs.get("current_count")
         initial_count = attrs.get("initial_count")
 
@@ -56,7 +56,6 @@ class BatchSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        print(self.context["request"].user, " this is the user")
         validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)
 
