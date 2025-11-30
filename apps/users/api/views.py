@@ -1,5 +1,7 @@
 """User-related API views for registration, login, profile management, and permissions."""
 
+import logging
+
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -16,9 +18,8 @@ from apps.users.api.serializers import (
 )
 
 
-# The CookieTokenRefreshView is no longer needed.
-# You can remove it and use the standard TokenRefreshView from simple_jwt in your urls.py
-# like this: path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+# Module logger
+logger = logging.getLogger(__name__)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -36,6 +37,11 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
 
         refresh = RefreshToken.for_user(user)
+        logger.info(
+            "User registered: id=%s, email=%s",
+            getattr(user, "id", None),
+            getattr(user, "email", None),
+        )
 
         return Response(
             {
@@ -68,7 +74,14 @@ def login_view(request):
             "access": str(refresh.access_token),
         }
 
+        logger.info("Login successful for user id=%s", getattr(user, "id", None))
+
         return Response(response_data, status=status.HTTP_200_OK)
+    # log a failed login attempt (avoid logging passwords)
+    identifier = request.data.get("email") or request.data.get("username") or "unknown"
+    logger.warning(
+        "Login failed for identifier=%s; errors=%s", identifier, serializer.errors
+    )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -85,8 +98,10 @@ def logout_view(request):
         # The following line is for Django's session-based authentication
         # and is not strictly necessary for a stateless JWT setup, but doesn't harm.
         logout(request)
+        logger.info("Logout called for user id=%s", getattr(request.user, "id", None))
         return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
     except Exception as e:
+        logger.exception("Error during logout: %s", str(e))
         return Response(
             {"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -108,6 +123,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             return UserUpdateSerializer
         return UserSerializer
 
+    def perform_update(self, serializer):
+        serializer.save()
+        logger.info(
+            "Profile updated for user id=%s", getattr(self.request.user, "id", None)
+        )
+
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -125,6 +146,7 @@ def change_password_view(request):
 
         # Create new JWT tokens
         refresh = RefreshToken.for_user(user)
+        logger.info("Password changed for user id=%s", getattr(user, "id", None))
 
         return Response(
             {
@@ -134,6 +156,12 @@ def change_password_view(request):
             },
             status=status.HTTP_200_OK,
         )
+
+    logger.warning(
+        "Password change failed for user id=%s; errors=%s",
+        getattr(request.user, "id", None),
+        serializer.errors,
+    )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -149,6 +177,7 @@ class UserListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        logger.debug("UserList requested by user id=%s", getattr(user, "id", None))
         if user.role == "admin":
             return User.objects.all()
         return User.objects.filter(id=user.id)
@@ -183,6 +212,12 @@ def user_permissions_view(request):
     }
 
     user_permissions = permissions_map.get(user.role, {})
+
+    logger.debug(
+        "Permissions requested for user id=%s -> %s",
+        getattr(user, "id", None),
+        user_permissions,
+    )
 
     return Response(
         {"user": UserSerializer(user).data, "permissions": user_permissions},

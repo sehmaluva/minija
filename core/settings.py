@@ -241,3 +241,61 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
+# Logging configuration
+LOGS_DIR = os.path.join(BASE_DIR, "core", "logs")
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"}
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "standard",
+            "filename": os.path.join(LOGS_DIR, "django.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 5,
+            "encoding": "utf8",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG" if DEBUG else "INFO",
+        },
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# Dynamically create a handler and logger for each custom app
+for app_name in [app for app in INSTALLED_APPS if app.startswith("apps.")]:
+    app_name_short = app_name.split(".")[-1]
+    LOGGING["handlers"][f"{app_name_short}_file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "formatter": "standard",
+        "filename": os.path.join(LOGS_DIR, f"app.{app_name_short}.log"),
+        "maxBytes": 1024 * 1024 * 5,  # 5MB
+        "backupCount": 5,
+        "encoding": "utf8",
+    }
+    LOGGING["loggers"][app_name] = {
+        "handlers": ["console", f"{app_name_short}_file"],
+        "level": "DEBUG" if DEBUG else "INFO",
+        "propagate": False,
+    }
+
+# Ensure logs directory exists in production/dev startup (best-effort)
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+except Exception:
+    pass
