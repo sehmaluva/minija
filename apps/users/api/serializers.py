@@ -1,7 +1,39 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
 from apps.users.models.models import User
+
+
+def send_verification_email(user, request):
+    """
+    Sends a verification email to the user with a link and a code.
+    """
+    token = user.email_verification_token
+    # The base URL of your frontend application
+    frontend_url = "http://localhost:3000/verify-email"
+    verification_link = f"{frontend_url}?token={token}"
+
+    # Generate a simple 6-digit code from the token for display
+    verification_code = str(user.email_verification_token).replace("-", "")[:6].upper()
+
+    subject = "Verify Your Account for Minija"
+    # For a real project, you would use an HTML template
+    message = f"""
+    Hi {user.username},
+
+    Thank you for registering. Please verify your email address to activate your account.
+
+    You can either click the link below or use the 6-digit code in your app.
+
+    Verification Link: {verification_link}
+    Verification Code: {verification_code}
+
+    Thanks,
+    The Minija Team
+    """
+
+    send_mail(subject, message, "noreply@minija.com", [user.email])
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -31,7 +63,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password_confirm")
-        user = User.objects.create_user(**validated_data)
+        # Create the user but set them as inactive until verified
+        user = User.objects.create_user(
+            **validated_data, is_active=False, is_email_verified=False
+        )
+
+        # Send the verification email
+        send_verification_email(user, self.context.get("request"))
+
         return user
 
 
@@ -51,6 +90,13 @@ class UserLoginSerializer(serializers.Serializer):
             user = authenticate(username=email, password=password)
             if not user:
                 raise serializers.ValidationError("Invalid credentials")
+
+            # Check if the user's email is verified
+            if not user.is_email_verified:
+                raise serializers.ValidationError(
+                    "Email not verified. Please check your inbox."
+                )
+
             if not user.is_active:
                 raise serializers.ValidationError("User account is disabled")
             attrs["user"] = user

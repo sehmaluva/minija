@@ -15,6 +15,7 @@ from apps.users.api.serializers import (
     UserSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
+    send_verification_email,
 )
 
 
@@ -46,11 +47,92 @@ class RegisterView(generics.CreateAPIView):
         return Response(
             {
                 "user": UserSerializer(user).data,
-                "message": "User registered successfully",
+                "message": "User registered successfully. Please check your email to verify your account.",
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class EmailVerificationView(generics.GenericAPIView):
+    """
+    API view to verify email with a token.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        token_str = request.query_params.get("token")
+        if not token_str:
+            return Response(
+                {"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email_verification_token=token_str)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if user.is_email_verified:
+            return Response(
+                {"message": "Email already verified"}, status=status.HTTP_200_OK
+            )
+
+        user.is_active = True
+        user.is_email_verified = True
+        user.email_verification_token = None  # Invalidate the token after use
+        user.save()
+
+        return Response(
+            {"message": "Email successfully verified. You can now log in."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResendVerificationEmailView(generics.GenericAPIView):
+    """
+    API view to resend the verification email.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        if not email:
+            return Response(
+                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal that the user does not exist
+            return Response(
+                {
+                    "message": "If an account with this email exists, a verification email has been sent."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        if user.is_email_verified:
+            return Response(
+                {"message": "This email has already been verified."},
+                status=status.HTTP_200_OK,
+            )
+
+        # Generate a new token and send the email
+        import uuid
+
+        user.email_verification_token = uuid.uuid4()
+        user.save()
+        send_verification_email(user, request)
+
+        return Response(
+            {"message": "A new verification email has been sent."},
+            status=status.HTTP_200_OK,
         )
 
 

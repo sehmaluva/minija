@@ -9,4 +9,10 @@ urlpatterns = [
     path("change-password/", views.change_password_view, name="change_password"),
     path("users/", views.UserListView.as_view(), name="user_list"),
     path("permissions/", views.user_permissions_view, name="user_permissions"),
+    path("verify-email/", views.EmailVerificationView.as_view(), name="email_verify"),
+    path(
+        "resend-verification/",
+        views.ResendVerificationEmailView.as_view(),
+        name="resend_verification",
+    ),
 ]

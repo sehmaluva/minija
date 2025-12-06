@@ -1,5 +1,6 @@
 """Models for user management."""
 
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -18,6 +19,10 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="user")
     is_active = models.BooleanField(default=True)
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
