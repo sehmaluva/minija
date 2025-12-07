@@ -125,9 +125,10 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "role",
             "is_active",
+            "last_login",
             "created_at",
         )
-        read_only_fields = ("id", "created_at")
+        read_only_fields = ("id", "created_at", "last_login")
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
