@@ -16,10 +16,15 @@ class UserAdmin(BaseUserAdmin):
     )
     list_filter = ("role", "is_active", "is_staff", "created_at")
     search_fields = ("email", "username", "first_name", "last_name")
+    readonly_fields = ("email_verification_token",)
     ordering = ("-created_at",)
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ("Additional Info", {"fields": ("phone_number", "role")}),
+        (
+            "Email Verification",
+            {"fields": ("is_email_verified", "email_verification_token")},
+        ),
     )
 
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
