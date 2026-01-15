@@ -208,6 +208,13 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
+# Django default task handler
+TASKS = {
+    "default": {
+        "BACKEND": "django.tasks.backends.database.DatabaseBackend",
+    }
+}
+
 # Celery Configuration (for background tasks)
 CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
