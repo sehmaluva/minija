@@ -1,13 +1,12 @@
 """Models for user management."""
 
-import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
 class User(AbstractUser):
     """
-    Custom user model for the poultry management system
+    Custom user model
     """
 
     ROLE_CHOICES = [
@@ -20,9 +19,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="user")
     is_active = models.BooleanField(default=True)
     is_email_verified = models.BooleanField(default=False)
-    email_verification_token = models.UUIDField(
-        default=uuid.uuid4, editable=False, unique=True, null=True
-    )
+    email_verification_token = models.UUIDField(editable=True, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -30,6 +27,8 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
     class Meta:
+        """Class meta for User Model"""
+
         db_table = "users"
         verbose_name = "User"
         verbose_name_plural = "Users"
@@ -39,4 +38,5 @@ class User(AbstractUser):
 
     @property
     def full_name(self):
+        """Returns the fullname of the user"""
         return f"{self.first_name} {self.last_name}".strip()

@@ -41,7 +41,7 @@ services:
     volumes:
       - ./frontend/frontend:/app
       - ./frontend/frontend/dist:/app/dist
-  command: ["/bin/sh","-c","pnpm install && pnpm run build"]
+    command: ["/bin/sh","-c","pnpm install && pnpm run build"]
   nginx:
     image: nginx:stable
     ports:
