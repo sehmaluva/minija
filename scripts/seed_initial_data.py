@@ -1,5 +1,5 @@
 """
-Script to seed initial data for the poultry management system
+Script to seed initial data for the project management system
 Run this after creating the database tables
 """
 
