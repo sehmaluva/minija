@@ -1,3 +1,5 @@
+"""URLS for User Management App"""
+
 from django.urls import path
 from . import views
 
