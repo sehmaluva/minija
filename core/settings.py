@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # third party
     "rest_framework",
     "rest_framework.authtoken",
@@ -40,7 +41,7 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
     "django_extensions",
-    # custom apps (broiler-focused: farms module removed in clean reset)
+    "apps.account",
     "apps.health",
     "apps.birds",
     "apps.production",
