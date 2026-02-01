@@ -1,3 +1,5 @@
+"""Models for User Accounts management"""
+
 import datetime
 import functools
 import operator
@@ -21,7 +23,12 @@ from apps.account.fields import TimeZoneField
 from apps.account.hooks import hookset
 from apps.account.languages import DEFAULT_LANGUAGE
 from apps.account.managers import EmailAddressManager, EmailConfirmationManager
-from apps.account.signals.signals import signup_code_sent, signup_code_used
+from apps.account.signals.signals import (
+    signup_code_sent,
+    signup_code_used,
+    email_confirmed,  # noqa
+    email_confirmation_sent,  # noqa
+)
 
 
 class Account(models.Model):
@@ -379,7 +386,7 @@ class EmailConfirmation(models.Model):
         hookset.send_confirmation_email([self.email_address.email], ctx)
         self.sent = timezone.now()
         self.save()
-        signals.email_confirmation_sent.send(sender=self.__class__, confirmation=self)
+        email_confirmation_sent.send(sender=self.__class__, confirmation=self)
 
 
 class AccountDeletion(models.Model):
