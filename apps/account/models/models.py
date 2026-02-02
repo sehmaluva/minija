@@ -17,7 +17,6 @@ from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 
 import pytz
-from apps.account import signals
 from apps.account.conf import settings
 from apps.account.fields import TimeZoneField
 from apps.account.hooks import hookset
@@ -361,9 +360,7 @@ class EmailConfirmation(models.Model):
             email_address.verified = True
             email_address.set_as_primary(conditional=True)
             email_address.save()
-            signals.email_confirmed.send(
-                sender=self.__class__, email_address=email_address
-            )
+            email_confirmed.send(sender=self.__class__, email_address=email_address)
             return email_address
 
     def send(self, **kwargs):
