@@ -40,7 +40,7 @@ Centralized accounting across all projects:
 ## 4. System Architecture (High Level)
 
 - Frontend: Responsive mobile app (Flutter or React Native) for field use.
-- Backend: Scalable API (e.g., Django) handling multi-tenant project data.
+- Backend: Scalable API (Django) handling multi-tenant project data.
 - Database: Relational (PostgreSQL) to model owners, workers, and projects.
 - Analytics: Reporting engine for ROI and profit/loss per project.
 
