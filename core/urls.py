@@ -23,8 +23,8 @@ urlpatterns = [
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     # API endpoints
-    path("api/account/", include("apps.account.api.urls")),
     path("api/auth/", include("apps.users.api.urls")),
+    path("api/organizations/", include("apps.users.api.organization_urls")),
     # Removed farms/health API includes for broiler-focused product
     path("api/birds/", include("apps.birds.api.urls")),
     path("api/accounting/", include("apps.accounting.api.urls")),

@@ -2,6 +2,13 @@ from django.db import models
 
 
 class ChickOrder(models.Model):
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="chick_orders",
+        null=True,
+        blank=True,
+    )
     date = models.DateField()
     quantity = models.IntegerField()
     supplier = models.CharField(max_length=200, blank=True)
@@ -13,6 +20,13 @@ class ChickOrder(models.Model):
 
 
 class Reminder(models.Model):
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="reminders",
+        null=True,
+        blank=True,
+    )
     date = models.DateField()
     title = models.CharField(max_length=200)
     message = models.TextField(blank=True)

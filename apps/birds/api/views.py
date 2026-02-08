@@ -5,63 +5,63 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Sum, Avg, Q
-from django.utils import timezone
+from django.db.models import Sum, Avg
 from apps.birds.models.models import Batch
 from apps.birds.api.serializers import BatchSerializer
-from apps.users.permissions import CanManageBatches
+from apps.users.permissions import IsOrganizationMember, IsOrganizationAdmin
+
+
+def _get_org_or_error(request):
+    """Return the organization from request or None."""
+    return getattr(request, "organization", None)
 
 
 class BatchListCreateView(generics.ListCreateAPIView):
-    """API view for listing and creating batches"""
+    """API view for listing and creating batches."""
 
     serializer_class = BatchSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = [
-        "batch_number",
-    ]
+    search_fields = ["batch_number"]
     ordering_fields = ["batch_id", "current_count", "collection_date", "created_at"]
     ordering = ["created_at"]
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) == "admin":
-            return Batch.objects.all()
-        else:
-            return Batch.objects.filter(created_by=user).distinct()
+        org = _get_org_or_error(self.request)
+        if not org:
+            return Batch.objects.none()
+        return Batch.objects.filter(organization=org)
 
 
 class BatchDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """API view for retrieving, updating and deleting a batch."""
+
     serializer_class = BatchSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) == "admin":
-            return Batch.objects.all()
-        else:
-            return Batch.objects.filter(created_by=user).distinct()
+        org = _get_org_or_error(self.request)
+        if not org:
+            return Batch.objects.none()
+        return Batch.objects.filter(organization=org)
 
     def get_permissions(self):
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
-            return [CanManageBatches()]
-        return [permissions.IsAuthenticated()]
+            return [permissions.IsAuthenticated(), IsOrganizationAdmin()]
+        return [permissions.IsAuthenticated(), IsOrganizationMember()]
 
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def batch_statistics_view(request):
-    """
-    API view for getting batch statistics
-    """
-    user = request.user
+    """API view for getting batch statistics."""
+    org = _get_org_or_error(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-    if getattr(user, "role", None) == "admin":
-        batches = Batch.objects.all()
-    else:
-        batches = Batch.objects.filter(created_by=user).distinct()
-
+    batches = Batch.objects.filter(organization=org)
     active_batches = batches.filter(status="active")
 
     stats = {
@@ -74,12 +74,12 @@ def batch_statistics_view(request):
         "mortality_stats": {},
     }
 
-    all_batches = batches.exclude(status="active")
-    for status, _ in Batch.STATUS_CHOICES:
-        if status != "active":
-            count = all_batches.filter(status=status).count()
+    inactive_batches = batches.exclude(status="active")
+    for batch_status, _ in Batch.STATUS_CHOICES:
+        if batch_status != "active":
+            count = inactive_batches.filter(status=batch_status).count()
             if count > 0:
-                stats["mortality_stats"][status] = count
+                stats["mortality_stats"][batch_status] = count
 
     return Response(stats)
 
@@ -87,18 +87,16 @@ def batch_statistics_view(request):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def batch_performance_view(request, batch_id):
-    """
-    API view for getting detailed batch performance metrics
-    """
+    """API view for getting detailed batch performance metrics."""
+    org = _get_org_or_error(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     try:
-        user = request.user
+        batch = Batch.objects.get(id=batch_id, organization=org)
 
-        if getattr(user, "role", None) in ["admin"]:
-            batch = Batch.objects.get(id=batch_id)
-        else:
-            batch = Batch.objects.get(created_by=user, id=batch_id)
-
-        # calculate performance metrics
         age_weeks = batch.age_in_days / 7
         survival_rate = (
             (batch.current_count / batch.initial_count * 100)
@@ -106,9 +104,7 @@ def batch_performance_view(request, batch_id):
             else 0
         )
 
-        # Get weight records
         weight_data = []
-        # TODO: Add weight record aggregation once model exists
 
         performance_data = {
             "batch": BatchSerializer(batch).data,
@@ -128,13 +124,16 @@ def batch_performance_view(request, batch_id):
 
 
 @api_view(["POST"])
-@permission_classes([CanManageBatches])
+@permission_classes([permissions.IsAuthenticated])
 def bulk_batch_update_view(request):
-    """
-    API view for bulk updating batch counts (for mortality, sales, etc.)
-    """
-    batch_updates = request.data.get("batch_updates", [])
+    """API view for bulk updating batch counts (for mortality, sales, etc.)."""
+    org = _get_org_or_error(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
+    batch_updates = request.data.get("batch_updates", [])
     if not batch_updates:
         return Response(
             {"error": "No batch updates provided"}, status=status.HTTP_400_BAD_REQUEST
@@ -145,12 +144,10 @@ def bulk_batch_update_view(request):
 
     for update in batch_updates:
         try:
-            batch_id = update.get("batch_id")
+            bid = update.get("batch_id")
             new_count = update.get("new_count")
-            reason = update.get("reason")
 
-            batch = Batch.objects.get(id=batch_id)
-
+            batch = Batch.objects.get(id=bid, organization=org)
             batch.current_count = new_count
             if new_count <= 0:
                 batch.status = "deceased"
@@ -159,8 +156,8 @@ def bulk_batch_update_view(request):
             updated_batches.append(BatchSerializer(batch).data)
 
         except Batch.DoesNotExist:
-            errors.append(f"Batch with id (batch_id) not found")
+            errors.append(f"Batch with id {bid} not found")
         except Exception as e:
-            errors.append(f"Error updating batch {batch_id}: {str(e)}")
+            errors.append(f"Error updating batch {bid}: {str(e)}")
 
     return Response({"updated_batches": updated_batches, "errors": errors})

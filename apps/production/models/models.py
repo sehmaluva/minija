@@ -18,6 +18,13 @@ class FeedRecord(models.Model):
         ("mash", "Mixed Mash Maize Crumbs"),
     ]
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="feed_records",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="feed_records"
     )
@@ -62,6 +69,13 @@ class EggProduction(models.Model):
         ("dirty", "Dirty"),
     ]
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="egg_productions",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="egg_productions"
     )
@@ -102,6 +116,13 @@ class WeightRecord(models.Model):
     Model for tracking bird weight measurements
     """
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="weight_records",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="weight_records"
     )
@@ -138,6 +159,13 @@ class EnvironmentalRecord(models.Model):
     Model for tracking environmental conditions
     """
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="environmental_records",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="environmental_records"
     )

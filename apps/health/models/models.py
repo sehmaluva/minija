@@ -118,6 +118,13 @@ class MortalityRecord(models.Model):
         ("other", "Other"),
     ]
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="mortality_records",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="mortality_records"
     )

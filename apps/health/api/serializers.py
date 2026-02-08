@@ -5,7 +5,6 @@ from apps.health.models.models import (
     Medication,
     MortalityRecord,
 )
-from apps.birds.api.serializers import FlockSerializer
 from apps.users.api.serializers import UserSerializer
 
 
@@ -83,7 +82,9 @@ class HealthRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created_by", "created_at", "updated_at")
 
     def create(self, validated_data):
-        validated_data["created_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["created_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 
@@ -113,7 +114,9 @@ class HealthRecordCreateSerializer(serializers.ModelSerializer):
         vaccination_data = validated_data.pop("vaccination_details", None)
         medication_data = validated_data.pop("medication_details", None)
 
-        validated_data["created_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["created_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         health_record = HealthRecord.objects.create(**validated_data)
 
         if vaccination_data and health_record.record_type == "vaccination":
@@ -154,7 +157,9 @@ class MortalityRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "recorded_by", "created_at")
 
     def create(self, validated_data):
-        validated_data["recorded_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["recorded_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         mortality_record = super().create(validated_data)
 
         # Update batch current count

@@ -15,6 +15,13 @@ class Batch(models.Model):
         ("active", "Active"),
         ("sold", "Sold"),
     ]
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="batches",
+        null=True,
+        blank=True,
+    )
     batch_number = models.CharField(max_length=100, unique=True)
     supplier = models.CharField(max_length=100)
     collection_date = models.DateTimeField(auto_now_add=True)
@@ -33,6 +40,9 @@ class Batch(models.Model):
         verbose_name = "batch"
         verbose_name_plural = "batches"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["organization", "status"]),
+        ]
 
     def __str__(self):
         return self.batch_number

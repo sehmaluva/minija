@@ -15,7 +15,6 @@ from apps.users.api.serializers import (
     UserSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
-    send_verification_email,
 )
 
 
@@ -25,7 +24,9 @@ logger = logging.getLogger(__name__)
 
 class RegisterView(generics.CreateAPIView):
     """
-    API view for user registration
+    API view for user registration.
+    Creates user, sends 6-digit OTP + verification link email,
+    and auto-creates a default organization.
     """
 
     queryset = User.objects.all()
@@ -57,53 +58,83 @@ class RegisterView(generics.CreateAPIView):
 
 class EmailVerificationView(generics.GenericAPIView):
     """
-    API view to verify email with a token.
+    Verify email via 6-digit OTP **code** (POST) or link **token** (GET).
+
+    GET  /api/auth/verify-email/?token=<uuid>
+    POST /api/auth/verify-email/  {"email": "...", "code": "123456"}
     """
 
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
+        """Link-based verification (user clicked the email link)."""
+        from apps.users.services.otp_service import verify_token
+
         token_str = request.query_params.get("token")
         if not token_str:
             return Response(
-                {"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Token is required."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             user = User.objects.get(email_verification_token=token_str)
+        except (User.DoesNotExist, Exception):
+            return Response(
+                {"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        success, error = verify_token(user, token_str)
+        if success:
+            return Response(
+                {"message": "Email successfully verified. You can now log in."},
+                status=status.HTTP_200_OK,
+            )
+        return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        """Code-based verification (user entered 6-digit OTP in the app)."""
+        from apps.users.services.otp_service import verify_otp
+
+        email = request.data.get("email")
+        code = request.data.get("code")
+
+        if not email or not code:
+            return Response(
+                {"error": "Both email and code are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
-                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid email."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if user.is_email_verified:
+        success, error = verify_otp(user, code)
+        if success:
             return Response(
-                {"message": "Email already verified"}, status=status.HTTP_200_OK
+                {"message": "Email successfully verified. You can now log in."},
+                status=status.HTTP_200_OK,
             )
-
-        user.is_active = True
-        user.is_email_verified = True
-        user.email_verification_token = None  # Invalidate the token after use
-        user.save()
-
-        return Response(
-            {"message": "Email successfully verified. You can now log in."},
-            status=status.HTTP_200_OK,
-        )
+        return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendVerificationEmailView(generics.GenericAPIView):
     """
-    API view to resend the verification email.
+    Resend the verification email with a fresh OTP code and link.
+    Rate-limited to one email per cooldown period.
     """
 
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
+        from apps.users.services.otp_service import can_resend_otp, create_and_send_otp
+
         email = request.data.get("email")
         if not email:
             return Response(
-                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -123,12 +154,13 @@ class ResendVerificationEmailView(generics.GenericAPIView):
                 status=status.HTTP_200_OK,
             )
 
-        # Generate a new token and send the email
-        import uuid
+        if not can_resend_otp(user):
+            return Response(
+                {"error": "Please wait before requesting a new code."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
-        user.email_verification_token = uuid.uuid4()
-        user.save()
-        send_verification_email(user, request)
+        create_and_send_otp(user, request)
 
         return Response(
             {"message": "A new verification email has been sent."},

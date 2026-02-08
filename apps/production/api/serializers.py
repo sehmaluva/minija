@@ -40,7 +40,9 @@ class FeedRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "recorded_by", "created_at")
 
     def create(self, validated_data):
-        validated_data["recorded_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["recorded_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 
@@ -94,7 +96,9 @@ class EggProductionSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data["recorded_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["recorded_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 
@@ -150,7 +154,9 @@ class WeightRecordSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data["recorded_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["recorded_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 
@@ -184,5 +190,7 @@ class EnvironmentalRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "recorded_by", "created_at")
 
     def create(self, validated_data):
-        validated_data["recorded_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["recorded_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)

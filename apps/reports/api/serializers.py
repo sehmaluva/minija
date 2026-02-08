@@ -37,7 +37,9 @@ class ReportSerializer(serializers.ModelSerializer):
         return obj.batches.count()
 
     def create(self, validated_data):
-        validated_data["generated_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["generated_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 
@@ -73,7 +75,9 @@ class ReportCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         batches_ids = validated_data.pop("batches_ids", [])
-        validated_data["generated_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["generated_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
 
         report = Report.objects.create(**validated_data)
 

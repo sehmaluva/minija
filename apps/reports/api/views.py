@@ -3,9 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q, Count, Sum, Avg, F
+from django.db.models import Sum, Avg, F, Count
 from django.utils import timezone
 from datetime import timedelta, datetime
+from apps.birds.models.models import Batch
 from apps.reports.models.models import Report, Alert
 from apps.reports.api.serializers import (
     ReportSerializer,
@@ -13,16 +14,17 @@ from apps.reports.api.serializers import (
     AlertSerializer,
     AlertUpdateSerializer,
 )
-from apps.users.permissions import CanViewReports
-import json
+from apps.users.permissions import IsOrganizationMember
+
+
+def _get_org(request):
+    return getattr(request, "organization", None)
 
 
 class ReportListCreateView(generics.ListCreateAPIView):
-    """
-    API view for listing and creating reports
-    """
+    """API view for listing and creating reports."""
 
-    permission_classes = [CanViewReports]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["report_type", "report_format"]
     search_fields = ["title"]
@@ -35,34 +37,30 @@ class ReportListCreateView(generics.ListCreateAPIView):
         return ReportSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) in ["admin"]:
-            return Report.objects.all()
-        return Report.objects.filter(generated_by=user).distinct()
+        org = _get_org(self.request)
+        if not org:
+            return Report.objects.none()
+        return Report.objects.filter(organization=org)
 
 
 class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API view for retrieving, updating and deleting a report
-    """
+    """API view for retrieving, updating and deleting a report."""
 
     serializer_class = ReportSerializer
-    permission_classes = [CanViewReports]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) in ["admin"]:
-            return Report.objects.all()
-        return Report.objects.filter(generated_by=user).distinct()
+        org = _get_org(self.request)
+        if not org:
+            return Report.objects.none()
+        return Report.objects.filter(organization=org)
 
 
 class AlertListView(generics.ListAPIView):
-    """
-    API view for listing alerts
-    """
+    """API view for listing alerts."""
 
     serializer_class = AlertSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["alert_type", "severity", "is_read", "is_resolved"]
     search_fields = ["title", "message"]
@@ -70,18 +68,16 @@ class AlertListView(generics.ListAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) in ["admin"]:
-            return Alert.objects.all()
-        return Alert.objects.filter(created_by=user).distinct()
+        org = _get_org(self.request)
+        if not org:
+            return Alert.objects.none()
+        return Alert.objects.filter(organization=org)
 
 
 class AlertDetailView(generics.RetrieveUpdateAPIView):
-    """
-    API view for retrieving and updating an alert
-    """
+    """API view for retrieving and updating an alert."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOrganizationMember]
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:
@@ -89,35 +85,26 @@ class AlertDetailView(generics.RetrieveUpdateAPIView):
         return AlertSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) in ["admin"]:
-            return Alert.objects.all()
-        return Alert.objects.filter(created_by=user).distinct()
+        org = _get_org(self.request)
+        if not org:
+            return Alert.objects.none()
+        return Alert.objects.filter(organization=org)
 
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def analytics_dashboard_view(request):
-    """
-    API view for comprehensive analytics dashboard
-    """
-    user = request.user
+    """API view for comprehensive analytics dashboard."""
+    org = _get_org(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # Simplified: user-scope only, all active batches they created (or all if admin)
-    from apps.birds.models.models import Batch
+    batches = Batch.objects.filter(organization=org, status="active")
 
-    if getattr(user, "role", None) in ["admin"]:
-        batches = Batch.objects.filter(status="active")
-    else:
-        batches = Batch.objects.filter(created_by=user, status="active")
-
-    # Time periods for analysis
     today = timezone.now().date()
     last_30_days = today - timedelta(days=30)
-    last_7_days = today - timedelta(days=7)
-
-    # Farm stats removed in simplified model
-    farm_stats = {}
 
     # Batch statistics
     total_birds = batches.aggregate(total=Sum("current_count"))["total"] or 0
@@ -125,20 +112,13 @@ def analytics_dashboard_view(request):
         "total_flocks": batches.count(),
         "total_birds": total_birds,
         "average_batch_size": batches.aggregate(avg=Avg("current_count"))["avg"] or 0,
-        "batches_by_type": batches.values("flock_type")
-        .annotate(count=Count("id"), total_birds=Sum("current_count"))
-        .order_by("-total_birds"),
-        "breeds_distribution": batches.values("breed__name")
-        .annotate(count=Count("id"), total_birds=Sum("current_count"))
-        .order_by("-total_birds")[:5],
     }
 
     # Production analytics
     from apps.production.models.models import EggProduction, FeedRecord
 
-    # Egg production (last 30 days)
     recent_egg_production = EggProduction.objects.filter(
-        batch__in=batches, date__gte=last_30_days
+        organization=org, batch__in=batches, date__gte=last_30_days
     )
 
     egg_analytics = {
@@ -150,7 +130,6 @@ def analytics_dashboard_view(request):
             avg=Avg("production_rate")
         )["avg"]
         or 0,
-        "daily_production_trend": [],
         "grade_distribution": {
             "grade_a": recent_egg_production.aggregate(total=Sum("grade_a_eggs"))[
                 "total"
@@ -173,8 +152,9 @@ def analytics_dashboard_view(request):
         },
     }
 
-    # Feed consumption analytics
-    recent_feed = FeedRecord.objects.filter(batch__in=batches, date__gte=last_30_days)
+    recent_feed = FeedRecord.objects.filter(
+        organization=org, batch__in=batches, date__gte=last_30_days
+    )
 
     feed_analytics = {
         "total_consumption_30_days": recent_feed.aggregate(total=Sum("quantity_kg"))[
@@ -184,23 +164,26 @@ def analytics_dashboard_view(request):
         "total_cost_30_days": sum(
             record.quantity_kg * record.cost_per_kg for record in recent_feed
         ),
-        "feed_by_type": recent_feed.values("feed_type")
-        .annotate(total_kg=Sum("quantity_kg"), avg_cost=Avg("cost_per_kg"))
-        .order_by("-total_kg"),
-        "top_suppliers": recent_feed.values("supplier")
-        .annotate(total_kg=Sum("quantity_kg"))
-        .order_by("-total_kg")[:5],
+        "feed_by_type": list(
+            recent_feed.values("feed_type")
+            .annotate(total_kg=Sum("quantity_kg"), avg_cost=Avg("cost_per_kg"))
+            .order_by("-total_kg")
+        ),
+        "top_suppliers": list(
+            recent_feed.values("supplier")
+            .annotate(total_kg=Sum("quantity_kg"))
+            .order_by("-total_kg")[:5]
+        ),
     }
 
     # Health analytics
     from apps.health.models.models import HealthRecord, MortalityRecord
 
     recent_health = HealthRecord.objects.filter(
-        batch__in=batches, date__gte=last_30_days
+        organization=org, batch__in=batches, date__gte=last_30_days
     )
-
     recent_mortality = MortalityRecord.objects.filter(
-        batch__in=batches, date__gte=last_30_days
+        organization=org, batch__in=batches, date__gte=last_30_days
     )
 
     health_analytics = {
@@ -211,9 +194,11 @@ def analytics_dashboard_view(request):
             "total"
         ]
         or 0,
-        "mortality_by_cause": recent_mortality.values("cause_category")
-        .annotate(total=Sum("count"))
-        .order_by("-total"),
+        "mortality_by_cause": list(
+            recent_mortality.values("cause_category")
+            .annotate(total=Sum("count"))
+            .order_by("-total")
+        ),
         "health_cost_30_days": recent_health.aggregate(total=Sum("cost"))["total"] or 0,
     }
 
@@ -239,29 +224,26 @@ def analytics_dashboard_view(request):
         "overall_survival_rate": (
             sum(
                 (
-                    (batch.current_count / batch.initial_count * 100)
-                    if batch.initial_count > 0
+                    (b.current_count / b.initial_count * 100)
+                    if b.initial_count > 0
                     else 0
                 )
-                for batch in batches
+                for b in batches
             )
             / batches.count()
             if batches.count() > 0
             else 0
         ),
-        "average_flock_age": batches.aggregate(avg=Avg("age_in_days"))["avg"] or 0,
-        "capacity_utilization": 0,
     }
 
     # Recent alerts
     recent_alerts = Alert.objects.filter(
-        created_by=user,
+        organization=org,
         created_at__gte=timezone.now() - timedelta(days=7),
         is_resolved=False,
     ).order_by("-created_at")[:10]
 
     dashboard_data = {
-        "farm_statistics": farm_stats,
         "batch_statistics": batch_stats,
         "production_analytics": {
             "egg_production": egg_analytics,
@@ -272,7 +254,6 @@ def analytics_dashboard_view(request):
         "performance_indicators": performance_indicators,
         "recent_alerts": AlertSerializer(recent_alerts, many=True).data,
         "summary": {
-            "total_farms": 0,
             "total_flocks": batch_stats["total_flocks"],
             "total_birds": total_birds,
             "unresolved_alerts": recent_alerts.count(),
@@ -285,11 +266,14 @@ def analytics_dashboard_view(request):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def generate_report_view(request):
-    """
-    API view for generating custom reports
-    """
+    """API view for generating custom reports."""
+    org = _get_org(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     report_type = request.data.get("report_type")
-    # farm removed
     start_date = request.data.get("start_date")
     end_date = request.data.get("end_date")
     batch_ids = request.data.get("batch_ids", [])
@@ -300,32 +284,25 @@ def generate_report_view(request):
         )
 
     try:
-        from apps.birds.models.models import Batch
-
         user = request.user
-
-        # Parse dates
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
-        # Get batches
         if batch_ids:
-            batches = Batch.objects.filter(id__in=batch_ids, created_by=user)
+            batches = Batch.objects.filter(id__in=batch_ids, organization=org)
         else:
-            batches = Batch.objects.filter(created_by=user)
+            batches = Batch.objects.filter(organization=org)
 
-        # Generate report data based on type
         report_data = {}
 
         if report_type == "production":
             from apps.production.models.models import EggProduction, FeedRecord
 
             egg_production = EggProduction.objects.filter(
-                batch__in=batches, date__range=[start_date, end_date]
+                organization=org, batch__in=batches, date__range=[start_date, end_date]
             )
-
             feed_records = FeedRecord.objects.filter(
-                batch__in=batches, date__range=[start_date, end_date]
+                organization=org, batch__in=batches, date__range=[start_date, end_date]
             )
 
             report_data = {
@@ -340,7 +317,7 @@ def generate_report_view(request):
                 ]
                 or 0,
                 "total_feed_cost": sum(
-                    record.quantity_kg * record.cost_per_kg for record in feed_records
+                    r.quantity_kg * r.cost_per_kg for r in feed_records
                 ),
                 "batches_included": batches.count(),
                 "date_range": f"{start_date} to {end_date}",
@@ -350,11 +327,10 @@ def generate_report_view(request):
             from apps.health.models.models import HealthRecord, MortalityRecord
 
             health_records = HealthRecord.objects.filter(
-                batch__in=batches, date__range=[start_date, end_date]
+                organization=org, batch__in=batches, date__range=[start_date, end_date]
             )
-
             mortality_records = MortalityRecord.objects.filter(
-                batch__in=batches, date__range=[start_date, end_date]
+                organization=org, batch__in=batches, date__range=[start_date, end_date]
             )
 
             report_data = {
@@ -374,7 +350,7 @@ def generate_report_view(request):
                     .annotate(total=Sum("count"))
                     .order_by("-total")
                 ),
-                "batch_included": batches.count(),
+                "batches_included": batches.count(),
                 "date_range": f"{start_date} to {end_date}",
             }
 
@@ -384,7 +360,9 @@ def generate_report_view(request):
 
             feed_costs = (
                 FeedRecord.objects.filter(
-                    batch__in=batches, date__range=[start_date, end_date]
+                    organization=org,
+                    batch__in=batches,
+                    date__range=[start_date, end_date],
                 ).aggregate(total_cost=Sum(F("quantity_kg") * F("cost_per_kg")))[
                     "total_cost"
                 ]
@@ -393,7 +371,9 @@ def generate_report_view(request):
 
             health_costs = (
                 HealthRecord.objects.filter(
-                    batch__in=batches, date__range=[start_date, end_date]
+                    organization=org,
+                    batch__in=batches,
+                    date__range=[start_date, end_date],
                 ).aggregate(total=Sum("cost"))["total"]
                 or 0
             )
@@ -412,7 +392,6 @@ def generate_report_view(request):
                 "date_range": f"{start_date} to {end_date}",
             }
 
-        # Create report record
         report = Report.objects.create(
             title=f"{report_type.title()} Report - {start_date} to {end_date}",
             report_type=report_type,
@@ -421,6 +400,7 @@ def generate_report_view(request):
             end_date=end_date,
             parameters=report_data,
             generated_by=user,
+            organization=org,
         )
 
         if batch_ids:
@@ -428,7 +408,7 @@ def generate_report_view(request):
 
         return Response(
             {
-                "report_id": getattr(report, "id", None),
+                "report_id": report.id,
                 "report_data": report_data,
                 "message": "Report generated successfully",
             }
@@ -441,10 +421,13 @@ def generate_report_view(request):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def create_alert_view(request):
-    """
-    API view for creating system alerts
-    """
-    # farm removed
+    """API view for creating system alerts."""
+    org = _get_org(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     batch_id = request.data.get("batch_id")
     alert_type = request.data.get("alert_type")
     severity = request.data.get("severity")
@@ -457,13 +440,10 @@ def create_alert_view(request):
         )
 
     try:
-        from apps.birds.models.models import Batch
-
         user = request.user
-
         batch = None
         if batch_id:
-            batch = Batch.objects.get(id=batch_id, created_by=user)
+            batch = Batch.objects.get(id=batch_id, organization=org)
 
         alert = Alert.objects.create(
             batch=batch,
@@ -472,6 +452,7 @@ def create_alert_view(request):
             title=title,
             message=message,
             created_by=user,
+            organization=org,
         )
 
         return Response(
@@ -490,27 +471,22 @@ def create_alert_view(request):
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def bulk_alert_update_view(request):
-    """
-    API view for bulk updating alerts (mark as read/resolved)
-    """
+    """API view for bulk updating alerts (mark as read/resolved)."""
+    org = _get_org(request)
+    if not org:
+        return Response(
+            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     alert_ids = request.data.get("alert_ids", [])
-    action = request.data.get("action")  # 'mark_read' or 'mark_resolved'
+    action = request.data.get("action")
 
     if not alert_ids or not action:
         return Response(
             {"error": "Missing alert_ids or action"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    user = request.user
-
-    # Get user's accessible alerts
-    if user.role in ["admin"]:
-        alerts = Alert.objects.filter(id__in=alert_ids)
-    else:
-        alerts = Alert.objects.filter(
-            Q(farm__owner=user) | Q(farm__managers=user), id__in=alert_ids
-        )
-
+    alerts = Alert.objects.filter(organization=org, id__in=alert_ids)
     updated_count = 0
 
     for alert in alerts:
@@ -520,7 +496,7 @@ def bulk_alert_update_view(request):
             updated_count += 1
         elif action == "mark_resolved":
             alert.is_resolved = True
-            alert.resolved_by = user
+            alert.resolved_by = request.user
             alert.resolved_at = timezone.now()
             alert.save()
             updated_count += 1

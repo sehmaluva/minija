@@ -6,10 +6,6 @@ import os
 from pathlib import Path
 from decouple import config
 
-# Timezone and Language choices
-from apps.account.timezones import TIMEZONES
-from apps.account.languages import LANGUAGES
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -45,7 +41,6 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
     "django_extensions",
-    "apps.account",
     "apps.health",
     "apps.birds",
     "apps.production",
@@ -63,6 +58,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.users.middleware.OrganizationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -129,7 +125,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
-# ==================== ACCOUNT APP SETTINGS ====================
+# ==================== EMAIL SETTINGS ====================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 1025  # Mailpit SMTP port
@@ -138,64 +134,17 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 DEFAULT_FROM_EMAIL = "noreply@minija.com"
+FRONTEND_URL = "http://localhost:3000"
 
-# URL Names for email links
-ACCOUNT_EMAIL_CONFIRMATION_URL = (
-    "account_confirm_email"  # URL name for email confirmation
-)
-ACCOUNT_PASSWORD_RESET_TOKEN_URL = (
-    "account_password_reset_confirm"  # URL name for password reset
-)
+# ==================== OTP SETTINGS ====================
+OTP_LENGTH = 6
+OTP_EXPIRY_MINUTES = 10
+OTP_MAX_ATTEMPTS = 5
+OTP_RESEND_COOLDOWN_SECONDS = 60
 
-# Hookset Configuration
-ACCOUNT_HOOKSET = "apps.account.hooks.AccountDefaultHookSet"
-
-# Signup Settings
-ACCOUNT_OPEN_SIGNUP = True
-ACCOUNT_APPROVAL_REQUIRED = False
-
-# Email Settings
-ACCOUNT_EMAIL_UNIQUE = True
-ACCOUNT_EMAIL_CONFIRMATION_REQUIRED = (
-    False  # Set True to require email verification before login
-)
-ACCOUNT_EMAIL_CONFIRMATION_EMAIL = True
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-ACCOUNT_EMAIL_CONFIRMATION_AUTO_LOGIN = False
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = None
-ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = None
-
-# Password Settings
-ACCOUNT_PASSWORD_USE_HISTORY = True
-ACCOUNT_PASSWORD_EXPIRY = 0  # 0 = never expire, or seconds
-ACCOUNT_NOTIFY_ON_PASSWORD_CHANGE = True
-ACCOUNT_PASSWORD_STRIP = True
-
-# Session Settings
-ACCOUNT_REMEMBER_ME_EXPIRY = 60 * 60 * 24 * 365 * 10  # 10 years
-
-# Deletion Settings
-ACCOUNT_DELETION_EXPUNGE_HOURS = 48
-
-# Redirect URLs (for non-API use)
-ACCOUNT_LOGIN_REDIRECT_URL = "/dashboard/"
-ACCOUNT_LOGOUT_REDIRECT_URL = "/"
-ACCOUNT_SIGNUP_REDIRECT_URL = "/dashboard/"
-ACCOUNT_PASSWORD_RESET_REDIRECT_URL = "/login/"
-ACCOUNT_PASSWORD_CHANGE_REDIRECT_URL = "/settings/"
-ACCOUNT_SETTINGS_REDIRECT_URL = "/settings/"
-
-# Protocol
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"  # Change to "https" in production
-
-
-ACCOUNT_TIMEZONES = TIMEZONES
-ACCOUNT_LANGUAGES = LANGUAGES
-
-
-# Sites Framework
-SITE_ID = 1
-# =============================================================
+# ==================== ORGANIZATION SETTINGS ====================
+ORGANIZATION_INVITATION_EXPIRY_DAYS = 7
+ORGANIZATION_MEMBER_LIMIT = 50
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -307,7 +256,7 @@ SIMPLE_JWT: Dict[str, Any] = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": True,
+    "UPDATE_LAST_LOGIN": False,  # Disabled for performance - eliminates extra DB write
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,

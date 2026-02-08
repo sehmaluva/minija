@@ -6,12 +6,14 @@ from apps.birds.models.models import Batch
 class BatchAdmin(admin.ModelAdmin):
     list_display = (
         "batch_number",
+        "organization",
         "supplier",
         "collection_date",
         "initial_count",
         "current_count",
         "created_by",
     )
+    list_filter = ("organization", "supplier", "created_at")
     list_filter = ("supplier", "created_at")
     search_fields = ("batch_number",)
     readonly_fields = (
@@ -35,7 +37,7 @@ class BatchAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Management", {"fields": ("created_by", "notes")}),
+        ("Management", {"fields": ("organization", "created_by", "notes")}),
         (
             "Calculated Fields",
             {"fields": ("age_in_days", "mortality_rate"), "classes": ("collapse",)},

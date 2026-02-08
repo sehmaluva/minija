@@ -2,6 +2,13 @@ from django.db import models
 
 
 class Sale(models.Model):
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="sales",
+        null=True,
+        blank=True,
+    )
     date = models.DateField()
     description = models.CharField(max_length=200, blank=True)
     quantity = models.IntegerField()
@@ -16,6 +23,13 @@ class Sale(models.Model):
 
 
 class Cost(models.Model):
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="costs",
+        null=True,
+        blank=True,
+    )
     date = models.DateField()
     description = models.CharField(max_length=200, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -25,6 +39,13 @@ class Cost(models.Model):
 
 
 class Transaction(models.Model):
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="transactions",
+        null=True,
+        blank=True,
+    )
     date = models.DateField()
     source = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=12, decimal_places=2)

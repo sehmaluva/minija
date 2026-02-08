@@ -1,12 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from apps.forecast.models.models import HistoricalEntry
-from datetime import timedelta
 
 
 def simple_linear_predict(xs, ys):
-    # simple least-squares line fit y = a*x + b; xs expected as 0..n-1
+    """Simple least-squares line fit y = a*x + b; xs expected as 0..n-1."""
     n = len(xs)
     if n == 0:
         return None
@@ -18,17 +17,31 @@ def simple_linear_predict(xs, ys):
         return ys[-1]
     a = num / den
     b = mean_y - a * mean_x
-    return a * (n) + b
+    return a * n + b
+
 
 class FeedPredictionView(APIView):
     """Predict next day's feed requirement (kg) using a simple linear trend on recent entries."""
 
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
+        org = getattr(request, "organization", None)
+        if not org:
+            return Response(
+                {"error": "No organization selected"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         days = int(request.query_params.get("days", 7))
-        entries = HistoricalEntry.objects.all().order_by("-date")[:days]
-        entries = list(reversed(entries))
+        entries = list(
+            HistoricalEntry.objects.filter(organization=org).order_by("-date")[:days]
+        )
+        entries.reverse()
+
         if not entries:
             return Response({"error": "no data"}, status=status.HTTP_400_BAD_REQUEST)
+
         xs = list(range(len(entries)))
         ys = [float(e.feed_kg) for e in entries]
         pred = simple_linear_predict(xs, ys)

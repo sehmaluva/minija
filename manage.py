@@ -3,9 +3,15 @@
 import os
 import sys
 
-if __name__ == '__main__':
+# Workaround for Python 3.12 import deadlock: SimpleJWT's settings.py imports
+# from django.test.signals which triggers loading django.test.testcases during
+# apps.populate(), causing an import lock deadlock via email.charset.
+# Pre-import the email submodules to break the deadlock cycle.
+# import email.charset  # noqa: E402
+
+if __name__ == "__main__":
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

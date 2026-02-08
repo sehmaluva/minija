@@ -56,7 +56,9 @@ class BatchSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data["created_by"] = self.context["request"].user
+        request = self.context["request"]
+        validated_data["created_by"] = request.user
+        validated_data["organization"] = getattr(request, "organization", None)
         return super().create(validated_data)
 
 

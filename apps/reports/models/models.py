@@ -26,6 +26,13 @@ class Report(models.Model):
     ]
 
     # Removed farm foreign key in simplified multi-tenant model
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="reports",
+        null=True,
+        blank=True,
+    )
     title = models.CharField(max_length=200)
     report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
     report_format = models.CharField(max_length=10, choices=REPORT_FORMATS)
@@ -72,6 +79,13 @@ class Alert(models.Model):
     ]
 
     # Removed farm foreign key; optional batch reference retained
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="alerts",
+        null=True,
+        blank=True,
+    )
     batch = models.ForeignKey(
         Batch, on_delete=models.CASCADE, related_name="alerts", null=True, blank=True
     )

@@ -12,6 +12,13 @@ class HistoricalEntry(models.Model):
     - note: optional note
     """
 
+    organization = models.ForeignKey(
+        "users.Organization",
+        on_delete=models.CASCADE,
+        related_name="historical_entries",
+        null=True,
+        blank=True,
+    )
     date = models.DateField(default=timezone.now)
     feed_kg = models.DecimalField(max_digits=10, decimal_places=2, default="0.00")
     birds_count = models.IntegerField(null=True, blank=True)
