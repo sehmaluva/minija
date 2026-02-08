@@ -1,47 +1,63 @@
-amqp==5.3.1
-asgiref==3.11.0
-attrs==25.3.0
-billiard==4.2.1
-celery==5.3.4
-certifi==2026.1.4
-charset-normalizer==3.4.3
-click==8.2.1
-click-didyoumean==0.3.1
-click-plugins==1.1.1.2
-click-repl==0.3.0
-Django==6.0.1
-django-cors-headers==4.3.1
-django-extensions==4.1
-django-filter==24.3
-Django-Verify-Email==3.0.3
-djangorestframework==3.16.1
+# Stable requirements for Django project
+# Recommended Python version: 3.12.x
+
+# Core Django
+Django==5.1.4
+asgiref==3.8.1
+
+# Django REST Framework
+djangorestframework==3.15.2
 djangorestframework-simplejwt==5.5.1
-drf-spectacular==0.27.1
-idna==3.10
-inflection==0.5.1
-jsonschema==4.25.1
-jsonschema-specifications==2025.9.1
-kombu==5.5.4
-packaging==25.0
-Pillow==12.1.0
-prompt_toolkit==3.0.52
-psycopg2-binary==2.9.11
-PyJWT==2.10.1
-pylint
-python-dateutil==2.9.0.post0
-python-decouple==3.8
-pytz==2025.2
-PyYAML==6.0.2
-redis==5.0.1
-referencing==0.36.2
-requests==2.32.5
-rpds-py==0.27.1
-setuptools==80.9.0
-six==1.17.0
-sqlparse==0.5.5
-typing_extensions==4.15.0
-tzdata==2025.2
-uritemplate==4.2.0
-urllib3==2.5.0
+PyJWT==2.9.0
+
+# API Documentation
+drf-spectacular==0.28.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# CORS
+django-cors-headers==4.6.0
+
+# Filtering
+django-filter==24.3
+
+# Development tools
+django-extensions==3.2.3
+
+# Email verification
+Django-Verify-Email==3.0.3
+
+# Background tasks
+celery==5.4.0
+redis==5.2.1
+kombu==5.4.2
+amqp==5.3.1
+billiard==4.2.1
 vine==5.1.0
-wcwidth==0.2.13
+
+# Configuration
+python-decouple==3.8
+
+# Image handling
+Pillow==11.0.0
+
+# Utilities
+pytz==2024.2
+python-dateutil==2.9.0.post0
+requests==2.32.3
+
+# Account management
+django-appconf==1.0.6
+
+# Other dependencies
+click==8.1.7
+packaging==24.2
+sqlparse==0.5.2
+typing_extensions==4.12.2
+PyYAML==6.0.2
+urllib3==2.2.3
+certifi==2024.8.30
+charset-normalizer==3.4.0
+idna==3.10
+six==1.16.0
