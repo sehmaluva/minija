@@ -3,6 +3,7 @@ Django settings for core project.
 """
 
 import os
+import sys
 from pathlib import Path
 from decouple import config
 
@@ -94,6 +95,13 @@ DATABASES = {
         "PORT": config("DB_PORT"),
     }
 }
+
+# Use SQLite in-memory for tests (avoids CREATEDB permission requirement)
+if "test" in sys.argv or "test_coverage" in sys.argv:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
