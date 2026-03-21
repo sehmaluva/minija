@@ -5,22 +5,54 @@ Django settings for core project.
 import os
 import sys
 from pathlib import Path
-from decouple import config
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+def getenv_required(key: str) -> str:
+    """Get a required environment variable."""
+    value = os.getenv(key)
+    if value is None:
+        raise ValueError(f"Required environment variable '{key}' is not set")
+    return value
+
+
+def getenv_bool(key: str, default: bool = False) -> bool:
+    """Get a boolean environment variable."""
+    value = os.getenv(key, str(default)).lower()
+    return value in ("true", "1", "yes", "on")
+
+
+def getenv_int(key: str, default: int = 0) -> int:
+    """Get an integer environment variable."""
+    value = os.getenv(key, str(default))
+    try:
+        return int(value)
+    except ValueError:
+        raise ValueError(
+            f"Environment variable '{key}' must be an integer, got '{value}'"
+        )
+
+
+def getenv_list(key: str, default: str = "") -> list[str]:
+    """Get a list environment variable (comma-separated)."""
+    value = os.getenv(key, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = getenv_required("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=True, cast=bool)
+DEBUG = getenv_bool("DEBUG", True)
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
-    cast=lambda v: [s.strip() for s in v.split(",")],
-)
+ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 
@@ -88,11 +120,11 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": getenv_int("DB_PORT", 5432),
     }
 }
 
@@ -134,31 +166,29 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 # ==================== EMAIL SETTINGS ====================
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
 )
-EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_PORT = config("EMAIL_PORT")  # Mailpit SMTP port
-EMAIL_USE_TLS = config("EMAIL_USE_TLS")
-EMAIL_USE_SSL = config("EMAIL_USE_SSL")
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
-FRONTEND_URL = config("FRONTEND_URL")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = getenv_int("EMAIL_PORT", 587)
+EMAIL_USE_TLS = getenv_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = getenv_bool("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 # ==================== OTP SETTINGS ====================
-OTP_LENGTH = config("OTP_LENGTH", default=6, cast=int)
-OTP_EXPIRY_MINUTES = config("OTP_EXPIRY_MINUTES", default=10, cast=int)
-OTP_MAX_ATTEMPTS = config("OTP_MAX_ATTEMPTS", default=5, cast=int)
-OTP_RESEND_COOLDOWN_SECONDS = config(
-    "OTP_RESEND_COOLDOWN_SECONDS", default=60, cast=int
-)
+OTP_LENGTH = getenv_int("OTP_LENGTH", 6)
+OTP_EXPIRY_MINUTES = getenv_int("OTP_EXPIRY_MINUTES", 10)
+OTP_MAX_ATTEMPTS = getenv_int("OTP_MAX_ATTEMPTS", 3)
+OTP_RESEND_COOLDOWN_SECONDS = getenv_int("OTP_RESEND_COOLDOWN_SECONDS", 60)
 
 # ==================== ORGANIZATION SETTINGS ====================
-ORGANIZATION_INVITATION_EXPIRY_DAYS = config(
-    "ORGANIZATION_INVITATION_EXPIRY_DAYS", default=7, cast=int
+ORGANIZATION_INVITATION_EXPIRY_DAYS = getenv_int(
+    "ORGANIZATION_INVITATION_EXPIRY_DAYS", 7
 )
-ORGANIZATION_MEMBER_LIMIT = config("ORGANIZATION_MEMBER_LIMIT", default=50, cast=int)
+ORGANIZATION_MEMBER_LIMIT = getenv_int("ORGANIZATION_MEMBER_LIMIT", 10)
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -251,8 +281,8 @@ TASKS = {
 
 
 # Celery Configuration (for background tasks)
-CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

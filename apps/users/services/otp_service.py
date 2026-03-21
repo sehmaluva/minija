@@ -19,7 +19,7 @@ OTP_RESEND_COOLDOWN_SECONDS = getattr(settings, "OTP_RESEND_COOLDOWN_SECONDS", 6
 
 def generate_otp(length=None):
     """Generate a cryptographically secure numeric OTP code."""
-    length = length or OTP_LENGTH
+    length = int(length or OTP_LENGTH)
     upper = 10**length
     code = str(secrets.randbelow(upper)).zfill(length)
     return code

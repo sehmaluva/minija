@@ -139,3 +139,39 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect")
         return value
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for requesting password reset
+    """
+
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for resetting password with token
+    """
+
+    token = serializers.UUIDField()
+    new_password = serializers.CharField(
+        write_only=True, validators=[validate_password]
+    )
+    new_password_confirm = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["new_password_confirm"]:
+            raise serializers.ValidationError("Passwords don't match")
+        return attrs
+
+    def validate_token(self, value):
+        from django.utils import timezone
+
+        try:
+            user = User.objects.get(password_reset_token=value)
+            if user.password_reset_expires_at < timezone.now():
+                raise serializers.ValidationError("Token has expired")
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid token")
+        return value

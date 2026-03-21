@@ -1,16 +1,19 @@
 """Email delivery helpers for verification and invitations."""
 
 import logging
+import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
 
-FRONTEND_URL = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
-FROM_EMAIL = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@minija.com")
+FRONTEND_URL = getattr(settings, "FRONTEND_URL")
+FROM_EMAIL = getattr(settings, "DEFAULT_FROM_EMAIL")
 
 
 def send_verification_email(user, otp_code, token, request=None):
@@ -91,3 +94,44 @@ def send_invitation_email(invitation):
         invitation.email,
         invitation.organization.name,
     )
+
+
+def send_password_reset_email(user):
+    """
+    Generate a password reset token, save it to the user, and send a reset email.
+    """
+    token = uuid.uuid4()
+    user.password_reset_token = token
+    user.password_reset_expires_at = timezone.now() + timedelta(hours=1)
+    user.save(update_fields=["password_reset_token", "password_reset_expires_at"])
+
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+
+    context = {
+        "user": user,
+        "reset_link": reset_link,
+    }
+
+    try:
+        html_message = render_to_string("emails/password_reset_email.html", context)
+        plain_message = strip_tags(html_message)
+    except Exception:
+        plain_message = (
+            f"Hi {user.first_name or user.username},\n\n"
+            f"You requested a password reset for your Minija account.\n\n"
+            f"Click this link to reset your password: {reset_link}\n\n"
+            f"This link expires in 1 hour.\n\n"
+            f"If you didn't request this, please ignore this email.\n\n"
+            f"Thanks,\nThe Minija Team"
+        )
+        html_message = None
+
+    send_mail(
+        subject="Reset Your Minija Password",
+        message=plain_message,
+        from_email=FROM_EMAIL,
+        recipient_list=[user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+    logger.info("Password reset email sent to %s", user.email)

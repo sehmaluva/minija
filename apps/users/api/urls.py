@@ -17,4 +17,8 @@ urlpatterns = [
         views.ResendVerificationEmailView.as_view(),
         name="resend_verification",
     ),
+    path(
+        "forgot-password/", views.ForgotPasswordView.as_view(), name="forgot_password"
+    ),
+    path("reset-password/", views.ResetPasswordView.as_view(), name="reset_password"),
 ]

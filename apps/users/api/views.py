@@ -15,6 +15,8 @@ from apps.users.api.serializers import (
     UserSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
 )
 
 
@@ -337,3 +339,67 @@ def user_permissions_view(request):
         {"user": UserSerializer(user).data, "permissions": user_permissions},
         status=status.HTTP_200_OK,
     )
+
+
+class ForgotPasswordView(generics.GenericAPIView):
+    """
+    API view for requesting password reset
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+
+        try:
+            user = User.objects.get(email=email)
+            if not user.is_active:
+                return Response(
+                    {
+                        "message": "If an account with this email exists, a password reset email has been sent."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            from apps.users.services.email_service import send_password_reset_email
+
+            send_password_reset_email(user)
+        except User.DoesNotExist:
+            pass  # Don't reveal if user exists
+
+        return Response(
+            {
+                "message": "If an account with this email exists, a password reset email has been sent."
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    """
+    API view for resetting password with token
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["token"]
+        new_password = serializer.validated_data["new_password"]
+
+        user = User.objects.get(password_reset_token=token)
+        user.set_password(new_password)
+        user.password_reset_token = None
+        user.password_reset_expires_at = None
+        user.save()
+
+        logger.info("Password reset for user id=%s", user.id)
+
+        return Response(
+            {"message": "Password reset successfully."}, status=status.HTTP_200_OK
+        )
