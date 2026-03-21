@@ -89,10 +89,10 @@ def batch_statistics_view(request):
 def batch_performance_view(request, batch_id):
     """API view for getting detailed batch performance metrics."""
     org = _get_org_or_error(request)
-    if not org:
-        return Response(
-            {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
-        )
+    # if not org:
+    #     return Response(
+    #         {"error": "No organization selected"}, status=status.HTTP_400_BAD_REQUEST
+    #     )
 
     try:
         batch = Batch.objects.get(id=batch_id, organization=org)

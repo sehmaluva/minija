@@ -50,7 +50,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = getenv_required("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = getenv_bool("DEBUG", True)
+DEBUG = getenv_bool("DEBUG")
 
 ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 
