@@ -3,7 +3,7 @@
 import logging
 
 from rest_framework import status, generics, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -17,6 +17,15 @@ from apps.users.api.serializers import (
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
+)
+from core.throttling import (
+    RegisterThrottle,
+    LoginThrottle,
+    LogoutThrottle,
+    EmailVerificationThrottle,
+    ResendVerificationThrottle,
+    ForgotPasswordThrottle,
+    ResetPasswordThrottle,
 )
 
 
@@ -34,6 +43,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegisterThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -67,6 +77,7 @@ class EmailVerificationView(generics.GenericAPIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [EmailVerificationThrottle]
 
     def get(self, request, *args, **kwargs):
         """Link-based verification (user clicked the email link)."""
@@ -129,6 +140,7 @@ class ResendVerificationEmailView(generics.GenericAPIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ResendVerificationThrottle]
 
     def post(self, request, *args, **kwargs):
         from apps.users.services.otp_service import can_resend_otp, create_and_send_otp
@@ -172,6 +184,7 @@ class ResendVerificationEmailView(generics.GenericAPIView):
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
+@throttle_classes([LoginThrottle])
 def login_view(request):
     """
     API view for user login
@@ -204,6 +217,7 @@ def login_view(request):
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
+@throttle_classes([LogoutThrottle])
 def logout_view(request):
     """
     API view for user logout.
@@ -248,6 +262,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
+@throttle_classes([ResetPasswordThrottle])
 def change_password_view(request):
     """
     API view for changing password
@@ -347,6 +362,7 @@ class ForgotPasswordView(generics.GenericAPIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ForgotPasswordThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = ForgotPasswordSerializer(data=request.data)
