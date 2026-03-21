@@ -134,25 +134,31 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 # ==================== EMAIL SETTINGS ====================
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "localhost"
-EMAIL_PORT = 1025  # Mailpit SMTP port
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
-DEFAULT_FROM_EMAIL = "noreply@minija.com"
-FRONTEND_URL = "http://localhost:3000"
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
+)
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT")  # Mailpit SMTP port
+EMAIL_USE_TLS = config("EMAIL_USE_TLS")
+EMAIL_USE_SSL = config("EMAIL_USE_SSL")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
+FRONTEND_URL = config("FRONTEND_URL")
 
 # ==================== OTP SETTINGS ====================
-OTP_LENGTH = 6
-OTP_EXPIRY_MINUTES = 10
-OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_COOLDOWN_SECONDS = 60
+OTP_LENGTH = config("OTP_LENGTH", default=6, cast=int)
+OTP_EXPIRY_MINUTES = config("OTP_EXPIRY_MINUTES", default=10, cast=int)
+OTP_MAX_ATTEMPTS = config("OTP_MAX_ATTEMPTS", default=5, cast=int)
+OTP_RESEND_COOLDOWN_SECONDS = config(
+    "OTP_RESEND_COOLDOWN_SECONDS", default=60, cast=int
+)
 
 # ==================== ORGANIZATION SETTINGS ====================
-ORGANIZATION_INVITATION_EXPIRY_DAYS = 7
-ORGANIZATION_MEMBER_LIMIT = 50
+ORGANIZATION_INVITATION_EXPIRY_DAYS = config(
+    "ORGANIZATION_INVITATION_EXPIRY_DAYS", default=7, cast=int
+)
+ORGANIZATION_MEMBER_LIMIT = config("ORGANIZATION_MEMBER_LIMIT", default=50, cast=int)
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
