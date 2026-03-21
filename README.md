@@ -1,73 +1,77 @@
-# Minija :Multi-Venture Management System (MVMS)
+# Minija Poultry Management App
 
-## 1. Project Overview
+## Project Purpose
 
-This cross-platform application helps entrepreneurs manage multiple micro-projects across diverse industries through a unified interface for finances, inventory, and labor. The core philosophy is: "Unified Interface, Diverse Logic".
+Minija is a poultry management platform built to help farmers and poultry businesses run daily operations, track performance, and make better business decisions from one system.
 
-## 2. Technical Expectations
+## Main Goals
 
-- Modular architecture: A "Project" is the parent entity. Enable or disable modules (Inventory, Livestock, Sales, Health) per project.
-- Offline-first: Operates reliably without connectivity; syncs when online.
-- Multi-user roles: Distinguish Owner (full financial visibility) and Worker (data entry and task completion).
-- Data flexibility: Handle high variability in data types and workflows.
+- Improve day-to-day farm operations with accurate record keeping.
+- Give clear visibility into production, health, finance, and orders.
+- Reduce manual paperwork and improve data consistency.
+- Support organization-based access for teams and farm staff.
+- Provide timely insights through reports and forecasting.
 
-## 3. Core Feature Requirements
+## Core Features
 
-### A. Project Engine
+### 1. Bird and Batch Management
 
-Define a project type at creation to tailor UI components:
-- Retail: Focus on unit sales, stock levels, and expiry dates.
-- Livestock: Focus on growth cycles, feed conversion, health/vaccinations, and mortality.
-- General: A flexible template for custom projects.
+- Create and manage poultry batches.
+- Track bird lifecycle details and status.
+- Organize records by farm/organization.
 
-### B. Unified Financial Ledger
+### 2. Production Tracking
 
-Centralized accounting across all projects:
-- Track total capital invested vs. total revenue across ventures.
-- Categorize expenses (e.g., stock, feed, wages, transport).
-- Support per-project and aggregated views.
+- Capture daily production metrics.
+- Monitor trends over time for operational decisions.
+- Support production performance analysis.
 
-### C. Resource & Inventory Management
+### 3. Health Monitoring
 
-- Low-stock alerts: Notifications when inventory or critical supplies fall below thresholds.
-- Transfer logs: Track resources moved between projects (e.g., materials reallocated from one project to another).
+- Record health events, treatments, and interventions.
+- Maintain traceable health history by batch.
+- Improve early response to disease and mortality risks.
 
-### D. Worker Management & Tasks
+### 4. Accounting and Cost Control
 
-- Daily checklists: Owners create tasks for each project.
-- Evidence of work: Workers can attach photos or timestamps on completion.
+- Log poultry-related income and expenses.
+- Track operational costs and profitability.
+- Support financial visibility per organization.
 
-## 4. System Architecture (High Level)
+### 5. Orders and Sales Flow
 
-- Frontend: Responsive mobile app (Flutter or React Native) for field use.
-- Backend: Scalable API (Django) handling multi-tenant project data.
-- Database: Relational (PostgreSQL) to model owners, workers, and projects.
-- Analytics: Reporting engine for ROI and profit/loss per project.
+- Manage customer orders.
+- Track order lifecycle and fulfillment.
+- Connect operations to revenue tracking.
 
-## 5. Development Roadmap
+### 6. Forecasting and Reporting
 
-### Phase 1: Foundation
+- Generate reports for operations and finance.
+- Forecast trends to support planning.
+- Provide management insights for better decisions.
 
-Build authentication and create "Project Containers".
+### 7. Authentication and Access Control
 
-### Phase 2: Ledger
+- JWT-based authentication.
+- Role and permission-aware access.
+- Organization context for multi-tenant data isolation.
 
-Implement a universal income/expense tracker that works across project types.
+## Technology Stack
 
-### Phase 3: Industry Modules
+- Backend: Django + Django REST Framework
+- Database: PostgreSQL
+- Authentication: SimpleJWT
+- Async tasks: Celery + Redis
+- API documentation: drf-spectacular (OpenAPI/Swagger)
+- Frontend: Next.js
+- Containerization: Docker/Podman compatible setup
 
-Add specific logic for Retail (Stock/Sales) and Livestock (Growth/Health).
+## Who This Project Is For
 
-### Phase 4: Collaboration
+- Poultry farm owners and managers
+- Farm operations teams
+- Poultry businesses that need production and financial visibility
 
-Implement Owner–Worker hierarchy and task assignment.
+## Vision
 
-### Phase 5: Insights
-
-Launch dashboards to compare performance across projects.
-
-## 6. Success Metrics
-
-- Data integrity: Zero record loss during offline/online syncing.
-- User adoption: Workers find data entry faster than physical notebooks.
-- Profit clarity: Owners identify most/least profitable projects within three clicks.
+Build a reliable, production-ready poultry management system that combines farm operations, financial performance, and decision support in one platform.

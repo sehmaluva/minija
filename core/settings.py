@@ -227,19 +227,19 @@ SPECTACULAR_SETTINGS = {
     "PREPROCESSING_HOOKS": [],
     "POSTPROCESSING_HOOKS": [],
     "ENUM_NAME_OVERRIDES": {},
-    "TAGS": [
-        {
-            "name": "Authentication",
-            "description": "User authentication and authorization endpoints",
-        },
-        {"name": "Batch", "description": "Batch management operations"},
-        {"name": "Production", "description": "Egg production tracking"},
-        {"name": "Health", "description": "Health monitoring and management"},
-        {"name": "Accounting", "description": "Financial transactions and accounting"},
-        {"name": "Orders", "description": "Order management"},
-        {"name": "Forecast", "description": "Production forecasting"},
-        {"name": "Reports", "description": "Reports and analytics"},
-    ],
+    # "TAGS": [
+    #     {
+    #         "name": "Authentication",
+    #         "description": "User authentication and authorization endpoints",
+    #     },
+    #     {"name": "Batch", "description": "Batch management operations"},
+    #     {"name": "Production", "description": "Egg production tracking"},
+    #     {"name": "Health", "description": "Health monitoring and management"},
+    #     {"name": "Accounting", "description": "Financial transactions and accounting"},
+    #     {"name": "Orders", "description": "Order management"},
+    #     {"name": "Forecast", "description": "Production forecasting"},
+    #     {"name": "Reports", "description": "Reports and analytics"},
+    # ],
 }
 
 # Django default task handler

@@ -4,18 +4,17 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY frontend/frontend/package.json /app/
-COPY frontend/frontend/pnpm-lock.yaml /app/
-COPY frontend/frontend/.npmrc /app/ 2>/dev/null || true
+COPY frontend/package.json /app/
+COPY frontend/pnpm-lock.yaml /app/
 
 RUN pnpm install --frozen-lockfile
 
-COPY frontend/frontend /app
-RUN pnpm run build
+COPY frontend /app
+RUN pnpm run build && pnpm exec next export
 
 # Production nginx image
 FROM nginx:stable-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/out /usr/share/nginx/html
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
