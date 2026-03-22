@@ -1,35 +1,32 @@
-import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-import { Analytics } from '@vercel/analytics/next'
-import { ThemeProvider } from '@/components/theme-provider'
-import './globals.css'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Providers } from "@/components/providers";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Huku Manager',
-  description: 'Broiler Management System',
-  generator: 'sehmaluva',
-}
+  title: "Minija",
+  description: "Poultry Management System",
+  generator: "sehmaluva",
+  applicationName: "Minija",
+  keywords: ["poultry", "management", "system"],
+  authors: [{ name: "sehmaluva" }],
+  creator: "sehmaluva",
+  publisher: "sehmaluva",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          storageKey="poultry-theme"
-        >
-          {children}
-        </ThemeProvider>
-        <Analytics />
+      <head />
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
-  )
+  );
 }

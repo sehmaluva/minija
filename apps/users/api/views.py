@@ -207,7 +207,11 @@ def login_view(request):
 
         return Response(response_data, status=status.HTTP_200_OK)
     # log a failed login attempt (avoid logging passwords)
-    identifier = request.data.get("email") or request.data.get("username") or "unknown"
+    identifier = "unknown"
+    if isinstance(request.data, dict):
+        identifier = (
+            request.data.get("email") or request.data.get("username") or "unknown"
+        )
     logger.warning(
         "Login failed for identifier=%s; errors=%s", identifier, serializer.errors
     )

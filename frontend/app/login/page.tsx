@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,36 +12,27 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Feather } from "lucide-react"
 import Link from "next/link"
 import { authAPI } from "@/lib/api-functions"
+import { useAuth } from "@/lib/auth-context"
 export const dynamic = 'force-dynamic'
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
-    setError("")
-
     try {
-      const response = await authAPI.login({
-        email: email,
-        password: password,
-      })
-
-      // Store user data if needed
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(response.user))
-      }
-
-      // Redirect to dashboard on successful login
-      window.location.href = "/dashboard"
-    } catch (err) {
-      console.error('Login error:', err)
-      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.")
+      const data = await authAPI.login({ email, password });
+      login(data.access, data.refresh);
+    } catch (error) {
+      setError("Failed to login. Please check your credentials.")
     } finally {
       setIsLoading(false)
     }

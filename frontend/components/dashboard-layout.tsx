@@ -10,6 +10,8 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { authAPI } from "@/lib/api-functions"
 import { ThemeToggle } from "@/components/theme-toggle"
+import withAuth from "./with-auth";
+import { useAuth } from "@/lib/auth-context";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -25,7 +27,8 @@ interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -130,8 +133,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8">
+          {children}
+        </main>
       </div>
     </div>
   )
 }
+
+export default withAuth(DashboardLayout);

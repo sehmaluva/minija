@@ -92,7 +92,7 @@ export default function HomePage() {
         <div className="text-center bg-white rounded-lg p-8 shadow-sm">
           <h2 className="text-3xl font-bold text-balance mb-4">Ready to Transform Your Farm?</h2>
           <p className="text-muted-foreground text-pretty mb-6 max-w-xl mx-auto">
-            Join thousands of farmers who trust PoultryPro to manage their operations efficiently.
+            Join thousands of farmers who trust Minija to manage their operations efficiently.
           </p>
           <Button size="lg" asChild>
             <Link href="/register">Get Started Today</Link>
