@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/birds/", include("apps.birds.api.urls")),
     path("api/accounting/", include("apps.accounting.api.urls")),
     # path("api/orders/", include("apps.orders.api.urls")),
+    # path("api/health/", include("apps.health.api.urls")),
     path("api/forecast/", include("apps.forecast.api.urls")),
     path("api/production/", include("apps.production.api.urls")),
     path("api/reports/", include("apps.reports.api.urls")),

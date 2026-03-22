@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { BarChart3, Bird, Heart, Home, Menu, Settings, Users, Wheat, LogOut, Feather } from "lucide-react"
+import { BarChart3, Bird, Heart, Home, Menu, Settings, Users, Wheat, LogOut, Feather, DollarSign, ShoppingCart, FileText } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { authAPI } from "@/lib/api-functions"
@@ -15,11 +15,12 @@ import { useAuth } from "@/lib/auth-context";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Birds", href: "/dashboard/birds", icon: Bird },
-  { name: "Health", href: "/dashboard/health", icon: Heart },
-  { name: "Feed", href: "/dashboard/feed", icon: Wheat },
+  { name: "Batches", href: "/dashboard/batches", icon: Bird },
   { name: "Production", href: "/dashboard/production", icon: BarChart3 },
-  { name: "Farm", href: "/dashboard/farm", icon: Users },
+  { name: "Health", href: "/dashboard/health", icon: Heart },
+  { name: "Financials", href: "/dashboard/accounting", icon: DollarSign },
+  { name: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
+  { name: "Reports", href: "/dashboard/reports", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
 ]
 
