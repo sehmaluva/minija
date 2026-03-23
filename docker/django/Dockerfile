@@ -12,7 +12,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . /code/
 
+# Ensure appuser can write to /code and shared runtime volumes.
 RUN adduser --disabled-password --gecos "" appuser || true
+RUN chown -R appuser:appuser /code /tmp
+
 USER appuser
 
 # Ensure entrypoint is executable if present

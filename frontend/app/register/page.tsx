@@ -12,6 +12,10 @@ import { userAPI } from "@/lib/api-functions"
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -28,7 +32,15 @@ export default function RegisterPage() {
     setError(null)
     setMessage(null)
     try {
-      await userAPI.register({ email, password });
+      await userAPI.register({
+        email,
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phoneNumber,
+        password,
+        password_confirm: confirmPassword,
+      });
       setMessage("Registration successful! Please check your email to verify your account.");
       setTimeout(() => router.push('/login'), 5000);
     } catch (err: any) {
@@ -55,8 +67,48 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Enter your last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
               </div>
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="password">Password</Label>

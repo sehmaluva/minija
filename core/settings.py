@@ -159,7 +159,14 @@ USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_ROOT = os.getenv("STATIC_ROOT", os.path.join(BASE_DIR, "staticfiles"))
+
+# Make sure STATIC_ROOT exists; fall back to /tmp if needed
+try:
+    os.makedirs(STATIC_ROOT, exist_ok=True)
+except Exception:
+    STATIC_ROOT = "/tmp/staticfiles"
+    os.makedirs(STATIC_ROOT, exist_ok=True)
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -331,7 +338,18 @@ SIMPLE_JWT: Dict[str, Any] = {
 }
 
 # Logging configuration
-LOGS_DIR = os.path.join(BASE_DIR, "core", "logs")
+DEFAULT_LOGS_DIR = os.path.join(BASE_DIR, "core", "logs")
+LOGS_DIR = os.getenv("LOGS_DIR", DEFAULT_LOGS_DIR)
+
+# Ensure logs directory exists and is writable; if not, fallback to /tmp
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    if not os.access(LOGS_DIR, os.W_OK):
+        raise PermissionError("Logs directory not writable")
+except Exception:
+    LOGS_DIR = os.path.join("/tmp", "minija-logs")
+    os.makedirs(LOGS_DIR, exist_ok=True)
+
 LOGGING: Dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -382,8 +400,4 @@ for app_name in [app for app in INSTALLED_APPS if app.startswith("apps.")]:
         "propagate": False,
     }
 
-# Ensure logs directory exists in production/dev startup (best-effort)
-try:
-    os.makedirs(LOGS_DIR, exist_ok=True)
-except Exception:
-    pass
+# Note: LOGS_DIR is already created above. No further action required here.

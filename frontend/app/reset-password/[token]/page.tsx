@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
     setError('');
     setMessage('');
     try {
-      await userAPI.resetPassword(token, password);
+      await userAPI.resetPassword(token, password, confirmPassword);
       setMessage('Your password has been reset successfully. You can now log in.');
       setTimeout(() => router.push('/login'), 3000);
     } catch (err) {

@@ -117,38 +117,43 @@ def analytics_dashboard_view(request):
     # Production analytics
     from apps.production.models.models import EggProduction, FeedRecord
 
+    from django.db.models import F, FloatField, Case, When
+    from django.db.models.functions import Cast
+
     recent_egg_production = EggProduction.objects.filter(
         organization=org, batch__in=batches, date__gte=last_30_days
     )
 
+    # Compute aggregates in a single database query
+    egg_aggregates = recent_egg_production.aggregate(
+        total_eggs_sum=Sum("total_eggs"),
+        grade_a_sum=Sum("grade_a_eggs"),
+        grade_b_sum=Sum("grade_b_eggs"),
+        grade_c_sum=Sum("grade_c_eggs"),
+        cracked_sum=Sum("cracked_eggs"),
+        dirty_sum=Sum("dirty_eggs"),
+        avg_production_rate=Avg(
+            Case(
+                When(batch__current_count=0, then=0.0),
+                default=(
+                    Cast(F("total_eggs"), output_field=FloatField())
+                    / Cast(F("batch__current_count"), output_field=FloatField())
+                )
+                * 100.0,
+                output_field=FloatField(),
+            )
+        ),
+    )
+
     egg_analytics = {
-        "total_eggs_30_days": recent_egg_production.aggregate(total=Sum("total_eggs"))[
-            "total"
-        ]
-        or 0,
-        "average_production_rate": recent_egg_production.aggregate(
-            avg=Avg("production_rate")
-        )["avg"]
-        or 0,
+        "total_eggs_30_days": egg_aggregates["total_eggs_sum"] or 0,
+        "average_production_rate": egg_aggregates["avg_production_rate"] or 0,
         "grade_distribution": {
-            "grade_a": recent_egg_production.aggregate(total=Sum("grade_a_eggs"))[
-                "total"
-            ]
-            or 0,
-            "grade_b": recent_egg_production.aggregate(total=Sum("grade_b_eggs"))[
-                "total"
-            ]
-            or 0,
-            "grade_c": recent_egg_production.aggregate(total=Sum("grade_c_eggs"))[
-                "total"
-            ]
-            or 0,
-            "cracked": recent_egg_production.aggregate(total=Sum("cracked_eggs"))[
-                "total"
-            ]
-            or 0,
-            "dirty": recent_egg_production.aggregate(total=Sum("dirty_eggs"))["total"]
-            or 0,
+            "grade_a": egg_aggregates["grade_a_sum"] or 0,
+            "grade_b": egg_aggregates["grade_b_sum"] or 0,
+            "grade_c": egg_aggregates["grade_c_sum"] or 0,
+            "cracked": egg_aggregates["cracked_sum"] or 0,
+            "dirty": egg_aggregates["dirty_sum"] or 0,
         },
     }
 
@@ -180,7 +185,7 @@ def analytics_dashboard_view(request):
     from apps.health.models.models import HealthRecord, MortalityRecord
 
     recent_health = HealthRecord.objects.filter(
-        organization=org, batch__in=batches, date__gte=last_30_days
+        batch__in=batches, date__gte=last_30_days
     )
     recent_mortality = MortalityRecord.objects.filter(
         organization=org, batch__in=batches, date__gte=last_30_days
@@ -305,13 +310,27 @@ def generate_report_view(request):
                 organization=org, batch__in=batches, date__range=[start_date, end_date]
             )
 
+            from django.db.models import F, FloatField, Case, When
+            from django.db.models.functions import Cast
+
+            egg_aggregates = egg_production.aggregate(
+                total_eggs=Sum("total_eggs"),
+                avg_production_rate=Avg(
+                    Case(
+                        When(batch__current_count=0, then=0.0),
+                        default=(
+                            Cast(F("total_eggs"), output_field=FloatField())
+                            / Cast(F("batch__current_count"), output_field=FloatField())
+                        )
+                        * 100.0,
+                        output_field=FloatField(),
+                    )
+                ),
+            )
+
             report_data = {
-                "total_eggs": egg_production.aggregate(total=Sum("total_eggs"))["total"]
-                or 0,
-                "average_production_rate": egg_production.aggregate(
-                    avg=Avg("production_rate")
-                )["avg"]
-                or 0,
+                "total_eggs": egg_aggregates["total_eggs"] or 0,
+                "average_production_rate": egg_aggregates["avg_production_rate"] or 0,
                 "total_feed_consumed": feed_records.aggregate(total=Sum("quantity_kg"))[
                     "total"
                 ]
@@ -327,7 +346,7 @@ def generate_report_view(request):
             from apps.health.models.models import HealthRecord, MortalityRecord
 
             health_records = HealthRecord.objects.filter(
-                organization=org, batch__in=batches, date__range=[start_date, end_date]
+                batch__in=batches, date__range=[start_date, end_date]
             )
             mortality_records = MortalityRecord.objects.filter(
                 organization=org, batch__in=batches, date__range=[start_date, end_date]
@@ -371,7 +390,6 @@ def generate_report_view(request):
 
             health_costs = (
                 HealthRecord.objects.filter(
-                    organization=org,
                     batch__in=batches,
                     date__range=[start_date, end_date],
                 ).aggregate(total=Sum("cost"))["total"]

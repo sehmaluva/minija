@@ -7,5 +7,5 @@ python manage.py migrate --noinput
 # Collect static files
 python manage.py collectstatic --noinput
 
-# Start Gunicorn
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000
+# Start Gunicorn (use python -m to avoid PATH issues)
+exec python -m gunicorn core.wsgi:application --bind 0.0.0.0:8000

@@ -38,6 +38,7 @@ vine==5.1.0
 
 # Configuration
 python-decouple==3.8
+python-dotenv==1.0.0
 
 # Image handling
 Pillow==11.0.0
@@ -61,3 +62,6 @@ certifi==2024.8.30
 charset-normalizer==3.4.0
 idna==3.10
 six==1.16.0
+
+# WSGI server
+gunicorn==21.2.0
